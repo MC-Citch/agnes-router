@@ -1,0 +1,9 @@
+httpx>=0.27.0
+openai>=1.30.0
+fastapi>=0.111.0
+uvicorn>=0.30.0
+python-dotenv>=1.0.0
+# 桌面版（可选）
+pywebview>=5.0
+# 打包工具（可选，仅打包时需要）
+pyinstaller>=6.0

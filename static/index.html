@@ -1,0 +1,3198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不绘来世</title>
+<style>
+  /* Local fonts */
+  @font-face { font-family: 'WenxinXileti'; src: url('/assets/fonts/wenxin-xileti.ttf') format('truetype'); }
+  @font-face { font-family: 'YanshiXingkai'; src: url('/assets/fonts/yanshixingkai.ttf') format('truetype'); }
+  @font-face { font-family: 'LemiChunchu'; src: url('/assets/fonts/lemichunchu.ttf') format('truetype'); }
+  @font-face { font-family: 'AveriaGruesa'; src: url('/assets/fonts/AveriaGruesaLibre-Regular.ttf') format('truetype'); }
+  :root {
+    --bg:        #09090b;
+    --surface:   #131316;
+    --surface2:  #1c1c21;
+    --surface3:  #25252c;
+    --frame:     #1a1a22;
+    --frame2:    #23232e;
+    --frame3:    #2d2d3a;
+    --border:    #2a2a32;
+    --border2:   #3a3a44;
+    --text:      #ededed;
+    --text2:     #9898a4;
+    --text3:     #5e5e6e;
+    --accent:    #6366f1;
+    --accent2:   #818cf8;
+    --accent-glow: rgba(99, 102, 241, .18);
+    /* surface 不透明度（0~1，默认 1 为完全不透明） */
+    --surface-alpha: 1;
+    --agnes:     #10b981;
+    --deepseek:  #3b82f6;
+    --danger:    #f43f5e;
+    --radius:    12px;
+    --font:       'LemiChunchu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-mono:  'LemiChunchu', monospace;
+    --ease:       cubic-bezier(.22,.61,.36,1);
+    /* Font size tokens – small (default) */
+    --fs-10: 10px; --fs-11: 11px; --fs-12: 12px; --fs-13: 13px; --fs-14: 14px;
+    --fs-15: 15px; --fs-16: 16px; --fs-18: 18px; --fs-20: 20px; --fs-22: 22px;
+    --fs-24: 24px; --fs-26: 26px; --fs-28: 28px; --fs-56: 56px; --fs-64: 64px;
+  }
+  /* Medium font – ~1.15× */
+  html.font-md {
+    --fs-10: 11.5px; --fs-11: 12.5px; --fs-12: 14px; --fs-13: 15px; --fs-14: 16px;
+    --fs-15: 17px; --fs-16: 18.5px; --fs-18: 21px; --fs-20: 23px; --fs-22: 25px;
+    --fs-24: 27.5px; --fs-26: 30px; --fs-28: 32px; --fs-56: 64px; --fs-64: 73px;
+  }
+  /* Large font – ~1.35× */
+  html.font-lg {
+    --fs-10: 13.5px; --fs-11: 15px; --fs-12: 16px; --fs-13: 17.5px; --fs-14: 19px;
+    --fs-15: 20px; --fs-16: 21.5px; --fs-18: 24px; --fs-20: 27px; --fs-22: 30px;
+    --fs-24: 32px; --fs-26: 35px; --fs-28: 38px; --fs-56: 75px; --fs-64: 86px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  ::selection { background: var(--accent-glow); color: #fff; }
+  body {
+    font-family: var(--font);
+    font-size: var(--fs-14);
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* Tinted elements use transparent surface */
+  .tinted { background: var(--frame-a, var(--frame)) !important; }
+
+  /* ========== Sidebar ========== */
+  .sidebar {
+    width: 248px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    height: 100%;
+  }
+
+  .sidebar-inner { display: flex; flex-direction: column; height: 100%; }
+
+  /* Logo area */
+  .sidebar-header {
+    padding: 22px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: var(--fs-20);
+    font-weight: 700;
+    font-family: 'WenxinXileti', sans-serif;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Nav */
+  .nav { padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px; cursor: pointer;
+    transition: all .15s var(--ease);
+    border: none; background: transparent;
+    color: var(--text2); font-size: var(--fs-14); font-family: var(--font);
+    text-align: left; width: 100%;
+    position: relative;
+  }
+  .nav-btn:hover { background: var(--frame2-a, var(--frame2)); color: var(--text); }
+  .nav-btn.active { background: var(--frame3-a, var(--frame3)); color: var(--text); font-weight: 600; }
+  .nav-btn.active::before {
+    content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; border-radius: 0 3px 3px 0;
+    background: var(--accent);
+  }
+  .nav-btn .icon { font-size: var(--fs-16); width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-btn .arrow { margin-left: auto; font-size: 9px; color: var(--text3); transition: transform .2s var(--ease); }
+  .nav-group-btn.expanded .arrow { transform: rotate(90deg); }
+
+  /* Nav sub-menu */
+  .nav-sub { display: none; flex-direction: column; padding-left: 24px; gap: 1px; }
+  .nav-sub.show { display: flex; }
+  .nav-sub-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; border-radius: 6px; cursor: pointer;
+    border: none; background: transparent;
+    color: var(--text3); font-size: var(--fs-13); font-family: var(--font);
+    text-align: left; width: 100%; transition: all .15s var(--ease);
+  }
+  .nav-sub-btn:hover { background: var(--frame2-a, var(--frame2)); color: var(--text2); }
+  .nav-sub-btn.active { color: var(--accent2); background: var(--frame3-a, var(--frame3)); font-weight: 600; }
+  .nav-sub-btn.active::before {
+    content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 16px; border-radius: 0 3px 3px 0;
+    background: var(--accent);
+  }
+  .nav-sub-btn { position: relative; }
+
+  /* Status card */
+  .sidebar-footer { padding: 12px 10px 16px; border-top: 1px solid var(--border); }
+  .status-card { background: var(--frame2-a, var(--frame2)); border-radius: 10px; padding: 14px 16px; border: 1px solid var(--border); }
+  .status-title {
+    font-size: var(--fs-11); text-transform: uppercase; color: var(--text3);
+    letter-spacing: 1.2px; margin-bottom: 10px; font-weight: 600;
+  }
+  .status-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: var(--fs-13); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 7px; }
+  .dot.on { background: var(--agnes); box-shadow: 0 0 6px var(--agnes); }
+  .dot.off { background: var(--danger); }
+  .status-route { font-size: var(--fs-11); color: var(--text3); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+  /* ========== Main ========== */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+  .header {
+    padding: 0 24px; height: 52px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+    /* 背景交给 .tinted（随主题透明度变化），与侧边栏视觉统一 */
+  }
+  .header-title { font-size: var(--fs-14); font-weight: 600; color: var(--text); }
+  .header .badge {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 20px; font-size: var(--fs-12); color: var(--text2);
+  }
+
+  /* ========== Page containers ========== */
+  .content { flex: 1; overflow-y: auto; min-height: 0; }
+
+  /* ========== Chat ========== */
+  #page-chat { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .chat-scroll { flex: 1; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+
+  .msg { max-width: 50%; animation: fadeIn .3s var(--ease); }
+  .msg.user { align-self: flex-end; }
+  .msg.assistant { align-self: flex-start; }
+  .msg .bubble {
+    padding: 14px 18px; border-radius: 14px; font-size: var(--fs-15);
+    line-height: 1.7; white-space: pre-line; word-break: break-word;
+  }
+  .msg.user .bubble {
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    color: #fff; border-bottom-right-radius: 5px;
+  }
+  .msg.assistant .bubble {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-bottom-left-radius: 5px;
+  }
+  .msg .bubble h1, .msg .bubble h2, .msg .bubble h3 { font-size: var(--fs-15); font-weight: 700; margin: 12px 0 6px; color: var(--text); }
+  .msg .bubble h3 { font-size: var(--fs-14); }
+  .msg .bubble hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .msg .bubble ul, .msg .bubble ol { margin: 6px 0; padding-left: 20px; }
+  .msg .bubble li { margin: 3px 0; }
+  .msg .bubble strong { font-weight: 700; color: var(--text); }
+  .msg .bubble em { font-style: italic; }
+  .msg .bubble code {
+    background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 4px;
+    font-size: var(--fs-13); font-family: var(--font-mono);
+  }
+  .msg .bubble pre {
+    background: rgba(0,0,0,.35); border: 1px solid var(--border);
+    padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 10px 0;
+  }
+  .msg .bubble pre code { background: none; padding: 0; font-size: var(--fs-13); }
+
+  .msg .meta {
+    font-size: var(--fs-11); color: var(--text3); margin-top: 5px; padding: 0 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .badge { padding: 2px 9px; border-radius: 10px; font-size: var(--fs-11); font-weight: 600; }
+  .badge.agnes { background: rgba(16,185,129,.15); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
+  .badge.deepseek { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
+  .badge.error { background: rgba(244,63,94,.15); color: #fb7185; border: 1px solid rgba(244,63,94,.25); }
+
+  /* Input area */
+  .input-area { padding: 16px 24px 18px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .input-row textarea {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+    color: var(--text); padding: 13px 16px; font-size: var(--fs-14); resize: none; outline: none;
+    font-family: var(--font); min-height: 50px; max-height: 200px; line-height: 1.6;
+    transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .input-row textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .input-row button {
+    padding: 13px 26px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    color: #fff; border: none; border-radius: 10px; font-size: var(--fs-14); font-weight: 600;
+    cursor: pointer; transition: all .2s var(--ease); white-space: nowrap; height: 50px;
+    font-family: var(--font);
+  }
+  .input-row button:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+  .input-row button:active { transform: translateY(0); }
+  .input-row button:disabled { opacity: .5; cursor: not-allowed; filter: none; transform: none; box-shadow: none; }
+  .input-options { display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+  .input-options select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 7px 12px; font-size: var(--fs-13); outline: none; cursor: pointer;
+    font-family: var(--font); transition: border-color .2s;
+  }
+  .input-options select:focus { border-color: var(--accent); }
+  .model-tag { font-size: var(--fs-12); color: var(--text3); padding: 4px 12px; background: var(--surface2); border-radius: 20px; border: 1px solid var(--border); }
+  .search-toggle { display: flex; align-items: center; gap: 5px; font-size: var(--fs-13); color: var(--text2); cursor: pointer; user-select: none; white-space: nowrap; padding: 5px 10px; border-radius: 8px; transition: all .15s; }
+  .search-toggle:hover { background: var(--surface2); color: var(--text); }
+  .search-toggle input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+  .research-note { font-size: var(--fs-12); color: var(--accent2); padding: 4px 12px; background: rgba(129,140,248,.12); border-radius: 20px; margin-left: 4px; border: 1px solid rgba(129,140,248,.2); display: none; }
+
+  /* ========== Image / Video pages ========== */
+  #page-image, #page-video { flex-direction: row; padding: 0; gap: 0; overflow: hidden; }
+  .img-panel-form {
+    width: 380px; flex-shrink: 0; border-right: 1px solid var(--border);
+    padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+    background: var(--surface); height: 100%;
+  }
+  .img-panel-form h2 { font-size: var(--fs-22); margin-bottom: 4px; font-weight: 700; letter-spacing: -0.3px; font-family: 'YanshiXingkai', sans-serif; }
+  .img-subtitle { font-size: var(--fs-13); color: var(--text2); margin-bottom: 22px; }
+
+  .img-panel-form label { display: block; font-size: var(--fs-13); color: var(--text2); margin-bottom: 6px; margin-top: 16px; font-weight: 500; }
+  .img-panel-form label:first-of-type { margin-top: 0; }
+  .img-panel-form textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 14px; font-size: var(--fs-14);
+    outline: none; font-family: var(--font); min-height: 100px; resize: vertical;
+    transition: border-color .2s var(--ease), box-shadow .2s var(--ease); line-height: 1.6;
+  }
+  .img-panel-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  .img-options-row { display: flex; gap: 12px; margin-top: 8px; }
+  .img-option { flex: 1; }
+  .img-option label { margin-top: 0; }
+  .img-option select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 11px 14px; font-size: var(--fs-14);
+    outline: none; cursor: pointer; font-family: var(--font); transition: border-color .2s;
+  }
+  .img-option select:focus { border-color: var(--accent); }
+
+  .img-panel-form > button {
+    margin-top: 20px; width: 100%; padding: 13px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    color: #fff; border: none; border-radius: 10px; font-size: var(--fs-14); font-weight: 600;
+    cursor: pointer; transition: all .2s var(--ease); font-family: var(--font);
+  }
+  .img-panel-form > button:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+  .img-panel-form > button:disabled { opacity: .5; cursor: not-allowed; filter: none; transform: none; box-shadow: none; }
+
+  .img-history-label {
+    font-size: var(--fs-11); text-transform: uppercase; color: var(--text3);
+    letter-spacing: 1.2px; margin-top: 24px; margin-bottom: 8px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  #img-result { display: flex; flex-direction: column; gap: 6px; }
+  #img-result .img-mini {
+    display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid transparent;
+    cursor: pointer; transition: all .15s var(--ease);
+  }
+  #img-result .img-mini:hover { background: var(--surface3); border-color: var(--border); }
+  #img-result .img-mini img { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; }
+  #img-result .img-mini .mini-info { flex: 1; font-size: var(--fs-12); color: var(--text2); min-width: 0; }
+  #img-result .img-mini .mini-info .prompt-preview { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-13); }
+
+  /* Gallery */
+  .img-panel-gallery { flex: 1; padding: 28px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gallery-empty { text-align: center; color: var(--text2); }
+  .gallery-empty-icon { font-size: var(--fs-64); margin-bottom: 16px; opacity: .4; }
+  .gallery-empty div:nth-child(2) { font-size: var(--fs-16); font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .gallery-empty div:nth-child(3) { font-size: var(--fs-13); }
+  .gallery-image { max-width: 100%; max-height: 70vh; border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,.5); transition: transform .2s var(--ease); cursor: zoom-in; }
+  .gallery-image:hover { transform: scale(1.02); }
+  .gallery-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .gallery-actions button {
+    padding: 10px 20px; border-radius: 8px; border: none; font-size: var(--fs-13); font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s var(--ease); font-family: var(--font);
+  }
+  .btn-save { background: var(--agnes); color: #fff; }
+  .btn-save:hover { filter: brightness(1.15); }
+  .btn-save:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+  .btn-open { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+  .btn-open:hover { background: var(--surface3); border-color: var(--border2) !important; }
+
+  /* Image zoom overlay */
+  .zoom-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,.85);
+    display: none; align-items: center; justify-content: center;
+    cursor: zoom-out;
+  }
+  .zoom-overlay.show { display: flex; }
+  .zoom-overlay img {
+    max-width: 95vw; max-height: 95vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: 0 0 60px rgba(0,0,0,.8);
+    transition: transform .15s var(--ease);
+    transform-origin: center center;
+    cursor: zoom-out;
+  }
+  .zoom-hint {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.6); color: var(--text2);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: var(--fs-12); pointer-events: none;
+  }
+  .gallery-info { font-size: var(--fs-13); color: var(--text2); margin-top: 12px; max-width: 90%; text-align: center; word-break: break-word; }
+  .gallery-toast {
+    position: fixed; bottom: 28px; right: 28px; padding: 12px 22px;
+    background: var(--surface3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; font-size: var(--fs-14); font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    animation: slideUp .3s var(--ease); z-index: 100; pointer-events: none; font-family: var(--font);
+  }
+
+  /* Loading */
+  .loading { display: flex; gap: 6px; padding: 14px 18px; }
+  .loading span { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+  .loading span:nth-child(2) { animation-delay: .2s; }
+  .loading span:nth-child(3) { animation-delay: .4s; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text2); gap: 14px; padding: 40px; }
+  .empty-state .icon { font-size: var(--fs-56); margin-bottom: 4px; opacity: .6; }
+  .empty-state > div:nth-child(2) { font-size: var(--fs-24); font-weight: 700; font-family: 'WenxinXileti', sans-serif; color: var(--text); }
+  .empty-state > div:nth-child(3) { font-size: var(--fs-14); color: var(--text2); }
+  .empty-state > div:nth-child(4) { font-size: var(--fs-13); color: var(--text3); }
+
+  /* Advanced Options */
+  .advanced-toggle {
+    display: flex; align-items: center; gap: 6px; margin-top: 18px;
+    padding: 8px 0; cursor: pointer; color: var(--text3); font-size: var(--fs-13);
+    border: none; background: none; user-select: none; font-family: var(--font);
+    border-bottom: 1px solid var(--border); transition: color .15s;
+    width: 100%; text-align: left;
+  }
+  .advanced-toggle:hover { color: var(--text2); }
+  .advanced-toggle .arrow { transition: transform .2s var(--ease); font-size: var(--fs-10); }
+  .advanced-toggle.open .arrow { transform: rotate(90deg); }
+  .advanced-panel { display: none; padding-top: 14px; }
+  .advanced-panel.show { display: block; }
+
+  .negative-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 14px; font-size: var(--fs-13);
+    outline: none; font-family: var(--font); min-height: 64px; resize: vertical;
+    transition: border-color .2s var(--ease), box-shadow .2s var(--ease); line-height: 1.5;
+  }
+  .negative-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(129,140,248,.12); }
+
+  .ref-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .ref-slot {
+    width: 76px; height: 76px; border-radius: 10px; position: relative;
+    background: var(--surface2); border: 1px solid var(--border);
+    overflow: hidden; flex-shrink: 0;
+  }
+  .ref-slot img { width: 100%; height: 100%; object-fit: cover; }
+  .ref-slot .remove {
+    position: absolute; top: 3px; right: 3px; width: 20px; height: 20px;
+    border-radius: 50%; background: rgba(0,0,0,.75); color: #fff; border: none;
+    font-size: var(--fs-11); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; line-height: 1; opacity: 0; transition: opacity .15s;
+  }
+  .ref-slot:hover .remove { opacity: 1; }
+  .ref-add {
+    width: 76px; height: 76px; border-radius: 10px;
+    background: var(--surface2); border: 2px dashed var(--border);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-28); color: var(--text3); transition: all .15s var(--ease); flex-shrink: 0;
+  }
+  .ref-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .ref-add input { display: none; }
+
+  .label-hint { font-size: var(--fs-12); color: var(--accent2); margin-left: 4px; opacity: 0.85; }
+
+  .video-preset-row { display: flex; gap: 10px; margin-top: 10px; }
+  .video-preset-item { flex: 1; }
+  .video-preset-item label { margin-top: 0; font-size: var(--fs-13); }
+  .video-preset-item select, .video-preset-item input[type="number"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 11px 12px; font-size: var(--fs-14);
+    outline: none; cursor: pointer; font-family: var(--font); transition: border-color .2s;
+  }
+  .video-preset-item select:focus, .video-preset-item input:focus { border-color: var(--accent); }
+  .video-calc-info {
+    font-size: var(--fs-12); color: var(--text3); margin-top: 10px; padding: 10px 12px;
+    background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+  }
+
+  /* ========== Docs ========== */
+  #page-docs { padding: 28px 24px; overflow-y: auto; }
+  .docs-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px; }
+  .docs-h3 { font-size: var(--fs-16); margin-bottom: 14px; color: var(--accent2); font-weight: 700; }
+  .docs-table { width: 100%; border-collapse: collapse; font-size: var(--fs-14); }
+  .docs-table td, .docs-table th { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  .docs-table th { color: var(--text3); font-weight: 600; font-size: var(--fs-12); text-transform: uppercase; letter-spacing: .5px; background: var(--surface2); }
+  .docs-table td:first-child { font-weight: 500; }
+  .docs-table tr:last-child td { border-bottom: none; }
+  .docs-table code {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 5px; font-size: var(--fs-13);
+    color: var(--accent2); font-family: var(--font-mono);
+  }
+  .docs-size-table td { font-family: var(--font-mono); font-size: var(--fs-13); white-space: nowrap; }
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .docs-tag {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 10px 14px; border-radius: 8px; font-size: var(--fs-14);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .docs-note {
+    font-size: var(--fs-13); color: var(--text2); margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-radius: 8px; border-left: 3px solid var(--accent2);
+  }
+
+  /* Page title in docs */
+  #page-docs > div { max-width: 860px; margin: 0 auto; }
+  #page-docs h2 { font-size: var(--fs-26); margin-bottom: 6px; font-weight: 700; letter-spacing: -0.5px; font-family: 'YanshiXingkai', sans-serif; }
+  #page-docs > div > p:first-of-type { font-size: var(--fs-14); color: var(--text2); margin-bottom: 24px; }
+
+  /* Docs tabs */
+  .docs-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .docs-tab {
+    padding: 12px 22px; border: none; background: none; color: var(--text3);
+    font-size: var(--fs-14); font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s var(--ease); font-family: var(--font);
+  }
+  .docs-tab:hover { color: var(--text2); }
+  .docs-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ========== About ========== */
+  #page-about { padding: 28px; overflow-y: auto; }
+  #page-about > div { max-width: 640px; margin: 0 auto; }
+  #page-about h2 { font-size: var(--fs-24); margin-bottom: 16px; }
+  #page-about table { width: 100%; font-size: var(--fs-13); border-collapse: collapse; }
+  #page-about table td { padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  #page-about table tr:last-child td { border-bottom: none; }
+  #page-about .about-info { margin-top: 16px; font-size: var(--fs-13); color: var(--text3); line-height: 2; }
+
+  /* ========== Settings ========== */
+  #page-settings { padding: 28px; overflow-y: auto; }
+  #page-settings > div { max-width: 680px; margin: 0 auto; }
+  .settings-section { margin-bottom: 28px; }
+  .settings-section h3 { font-size: var(--fs-16); font-weight: 700; margin-bottom: 6px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .settings-section p { font-size: var(--fs-13); color: var(--text2); margin-bottom: 14px; }
+
+  .bg-upload-zone {
+    display: flex; align-items: center; justify-content: center;
+    height: 90px; border: 2px dashed var(--border); border-radius: var(--radius);
+    cursor: pointer; transition: all .2s var(--ease); position: relative; overflow: hidden;
+  }
+  .bg-upload-zone:hover { border-color: var(--accent); background: rgba(99,102,241,.04); }
+  .bg-upload-zone.has-bg { border-style: solid; }
+  .bg-upload-zone input { display: none; }
+  .bg-upload-zone .upload-preview {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    opacity: .5;
+  }
+  .bg-upload-zone .upload-text { position: relative; z-index: 1; font-size: var(--fs-13); color: var(--text3); pointer-events: none; }
+
+  .opacity-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .opacity-row label { font-size: var(--fs-13); color: var(--text2); min-width: 90px; }
+  .opacity-row input[type="range"] { flex: 1; accent-color: var(--accent); height: 5px; }
+  .opacity-row .opacity-val { font-size: var(--fs-13); color: var(--text3); min-width: 42px; text-align: right; font-family: var(--font-mono); }
+
+  .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .preset-btn-wrap { text-align: center; cursor: pointer; }
+  .preset-btn {
+    width: 100%; aspect-ratio: 1; border-radius: 10px;
+    border: 2px solid transparent; cursor: pointer; transition: all .15s var(--ease);
+    position: relative; overflow: hidden;
+  }
+  .preset-btn-wrap:hover .preset-btn { transform: scale(1.06); }
+  .preset-btn.active { border-color: var(--text); box-shadow: 0 0 0 2px var(--accent); }
+  .preset-name { font-size: var(--fs-11); color: var(--text3); margin-top: 6px; font-weight: 500; }
+
+  .btn-reset {
+    width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 10px;
+    background: transparent; color: var(--text2); font-size: var(--fs-13); cursor: pointer;
+    transition: all .15s var(--ease); font-family: var(--font);
+  }
+  .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+  .btn-save-settings {
+    width: 100%; padding: 11px; border: 1px solid var(--accent); border-radius: 10px;
+    background: transparent; color: var(--accent2); font-size: var(--fs-14); cursor: pointer;
+    transition: all .15s var(--ease); font-family: var(--font); font-weight: 600; margin-bottom: 8px;
+  }
+  .btn-save-settings:hover { background: var(--accent-glow); }
+
+  /* Docs model toggle */
+  .docs-model-section { margin-bottom: 16px; }
+  .docs-model-toggle {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 12px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: var(--fs-14); cursor: pointer;
+    transition: all .15s var(--ease); font-family: var(--font); text-align: left;
+  }
+  .docs-model-toggle:hover { border-color: var(--accent); background: var(--surface2); }
+  .docs-model-toggle .arrow { margin-left: auto; font-size: 10px; color: var(--text3); transition: transform .2s var(--ease); }
+  .docs-model-toggle.expanded .arrow { transform: rotate(90deg); }
+  .docs-model-content { display: none; margin-top: 8px; }
+  .docs-model-content.show { display: block; }
+  .docs-model-body { padding-top: 8px; }
+
+  /* Font size selector */
+  .font-size-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .font-size-row > span { font-size: var(--fs-13); color: var(--text2); min-width: 90px; }
+  .font-size-options { display: flex; gap: 6px; }
+  .font-size-btn {
+    padding: 7px 18px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text2); font-size: var(--fs-13); cursor: pointer;
+    transition: all .15s var(--ease); font-family: var(--font);
+  }
+  .font-size-btn:hover { border-color: var(--border2); color: var(--text); }
+  .font-size-btn.active { border-color: var(--accent); color: var(--accent2); background: var(--accent-glow); }
+
+  /* API Key config */
+  .api-config-block {
+    margin-top: 16px; padding: 18px;
+    background: var(--surface2); border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .api-config-block .api-label {
+    font-size: var(--fs-14); font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .api-field { margin-bottom: 12px; }
+  .api-field:last-child { margin-bottom: 0; }
+  .api-field label { font-size: var(--fs-12); color: var(--text3); display: block; margin-bottom: 5px; font-weight: 500; }
+  .api-field input[type="password"], .api-field input[type="text"] {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 12px; font-size: var(--fs-13);
+    outline: none; font-family: var(--font); transition: border-color .2s, box-shadow .2s;
+  }
+  .api-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .api-field-row { display: flex; gap: 8px; }
+  .api-field-row input { flex: 1; }
+  .api-field-row button {
+    padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text2); cursor: pointer; font-size: var(--fs-12);
+    white-space: nowrap; transition: all .15s; font-family: var(--font);
+  }
+  .api-field-row button:hover { border-color: var(--border2); color: var(--text); }
+  .api-save-btn {
+    margin-top: 18px; width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    color: #fff; border: none; border-radius: 10px; font-size: var(--fs-14); font-weight: 600;
+    cursor: pointer; transition: all .2s var(--ease); font-family: var(--font);
+  }
+  .api-save-btn:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+
+  /* ========== Background Wallpaper ========== */
+  .bg-wallpaper {
+    position: absolute; inset: 0; z-index: -2;
+    background-size: cover; background-position: center;
+    filter: blur(var(--bg-blur, 12px)) brightness(var(--bg-brightness, 0.35));
+    transform: scale(1.1);
+    transition: filter 0.3s ease;
+  }
+  .bg-overlay {
+    position: absolute; inset: 0; z-index: -1;
+    background: rgba(0,0,0, 0.38);
+    pointer-events: none;
+  }
+
+  /* ========== Crop Modal ========== */
+  .crop-modal {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px;
+  }
+  .crop-container {
+    position: relative; display: inline-block;
+    max-width: 85vw; max-height: 65vh;
+    cursor: crosshair; user-select: none;
+  }
+  .crop-container img {
+    display: block; max-width: 85vw; max-height: 65vh;
+    object-fit: contain; pointer-events: none;
+  }
+  .crop-box {
+    position: absolute; border: 2px dashed #fff;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+    cursor: move; z-index: 2; min-width: 100px; min-height: 100px;
+  }
+  .crop-handle {
+    position: absolute; width: 12px; height: 12px;
+    background: #fff; border: 2px solid var(--accent);
+    border-radius: 2px; z-index: 3;
+  }
+  .crop-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+  .crop-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+  .crop-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+  .crop-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+  .crop-actions { display: flex; gap: 12px; z-index: 10; }
+  .crop-actions button {
+    padding: 12px 24px; border-radius: 10px; border: none;
+    font-size: var(--fs-14); font-weight: 600; cursor: pointer;
+    font-family: var(--font); transition: all .15s var(--ease);
+  }
+  .crop-actions button:first-child {
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    color: #fff;
+  }
+  .crop-actions button:first-child:hover { filter: brightness(1.1); }
+  .crop-actions button:nth-child(2) {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  }
+  .crop-actions button:nth-child(2):hover { background: var(--surface3); }
+  .crop-actions button:nth-child(3) {
+    background: transparent; color: var(--text2); border: 1px solid var(--border);
+  }
+  .crop-actions button:nth-child(3):hover { color: var(--text); border-color: var(--border2); }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 800px) {
+    .sidebar { display: none; }
+    .main { flex: 1; }
+    .content { min-height: 300px; }
+    .msg { max-width: 95%; }
+    .img-panel-form { width: 100%; border-right: none; }
+    #page-image { flex-direction: column !important; }
+    .img-panel-gallery { min-height: 300px; }
+  }
+  @media (max-height: 600px) {
+    .sidebar { width: 220px; }
+    .header { height: 44px; }
+    .input-area { padding: 10px 16px 12px; }
+    .input-row button { height: 44px; }
+    .input-row textarea { min-height: 40px; }
+    .chat-scroll { padding: 16px; }
+  }
+  /* ========== Splash Screen ========== */
+  .splash-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    cursor: default;
+    transition: cursor 0.3s;
+  }
+  .splash-screen:hover { cursor: pointer; }
+  .splash-video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .splash-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    transition: background 0.5s ease;
+  }
+  .splash-screen:hover .splash-overlay {
+    background: rgba(0,0,0,0.38);
+  }
+  .splash-content {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 40px;
+  }
+  .splash-logo {
+    width: 100px; height: 100px;
+    border-radius: 24px;
+    filter: drop-shadow(0 4px 20px rgba(108,140,255,0.5));
+    transition: transform 0.35s cubic-bezier(.22,.61,.36,1),
+                filter 0.35s cubic-bezier(.22,.61,.36,1),
+                border-radius 0.35s cubic-bezier(.22,.61,.36,1);
+    animation: splashLogoFloat 3.5s ease-in-out infinite;
+  }
+  @keyframes splashLogoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .splash-logo:hover {
+    transform: scale(1.08) translateY(-2px);
+    filter: drop-shadow(0 8px 30px rgba(108,140,255,0.7));
+    border-radius: 32px;
+    animation-play-state: paused;
+  }
+  .splash-title {
+    font-size: 48px; font-weight: 700;
+    color: var(--splash-text, #fff);
+    font-family: 'LemiChunchu', sans-serif; letter-spacing: 4px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    transition: text-shadow 0.3s ease, letter-spacing 0.3s ease;
+    cursor: default;
+  }
+  .splash-title:hover {
+    text-shadow: 0 2px 30px rgba(255,255,255,0.35), 0 0 60px rgba(108,140,255,0.4);
+    letter-spacing: 6px;
+  }
+  .splash-subtitle {
+    font-size: 14px; color: var(--splash-text2, rgba(255,255,255,0.65));
+    font-family: 'LemiChunchu', sans-serif;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+  .splash-content:hover .splash-subtitle {
+    color: var(--splash-text, #fff);
+    transform: translateY(-2px);
+  }
+  .splash-version {
+    font-size: 12px; color: var(--splash-text3, rgba(255,255,255,0.35));
+    font-family: 'LemiChunchu', sans-serif;
+    transition: color 0.3s ease;
+  }
+  .splash-version:hover { color: var(--splash-text2, rgba(255,255,255,0.6)); }
+  .splash-hint {
+    position: absolute; bottom: 40px; left: 0; right: 0;
+    text-align: center; font-size: 13px; color: var(--splash-text3, rgba(255,255,255,0.45));
+    font-family: 'LemiChunchu', sans-serif;
+    animation: splashPulse 2s ease-in-out infinite;
+    transition: color 0.3s ease;
+  }
+  .splash-screen:hover .splash-hint { color: var(--splash-text2, rgba(255,255,255,0.7)); }
+  @keyframes splashPulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+  }
+  @keyframes splashFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  .splash-screen.hidden {
+    animation: splashFadeOut 0.4s ease forwards;
+    pointer-events: none;
+  }
+  .splash-video-error {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div class="splash-screen" id="splash-screen">
+  <video class="splash-video" id="splash-video" autoplay muted loop playsinline>
+    <source src="/assets/default_video.mp4" type="video/mp4">
+  </video>
+  <div class="splash-video-error" id="splash-video-error">
+    <img src="/assets/default-bg.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+  </div>
+  <div class="splash-overlay"></div>
+  <div class="splash-content">
+    <img src="/assets/LOGO.png" alt="Logo" class="splash-logo">
+    <div class="splash-title">不绘来世</div>
+    <div class="splash-subtitle">智能 LLM 路由 · 多模态创作</div>
+    <div class="splash-version">v3.1</div>
+  </div>
+  <div class="splash-hint">点击任意位置进入应用</div>
+</div>
+
+
+<aside class="sidebar tinted">
+  <div class="sidebar-inner">
+    <div class="sidebar-header">
+      <div class="logo">不绘来世</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="chat">
+        <span class="icon">💬</span> 智能对话
+      </button>
+      <div class="nav-group">
+        <button class="nav-btn nav-group-btn" data-page="image">
+          <span class="icon">🎨</span> 图片生成
+          <span class="arrow">▶</span>
+        </button>
+        <div class="nav-sub" id="image-models">
+          <button class="nav-sub-btn active" data-model="agnes-image-2.1-flash">Agnes 2.1 Flash</button>
+          <button class="nav-sub-btn" data-model="agnes-image-2.5-flash">Agnes 2.5 Flash</button>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-btn nav-group-btn" data-page="video">
+          <span class="icon">🎬</span> 视频生成
+          <span class="arrow">▶</span>
+        </button>
+        <div class="nav-sub" id="video-models">
+          <button class="nav-sub-btn active" data-model="agnes-video-v2.0">Agnes Video V2.0</button>
+          <button class="nav-sub-btn" data-model="agnes-video-2.5-flash">Agnes Video 2.5 Flash</button>
+        </div>
+      </div>
+      <button class="nav-btn" data-page="docs">
+        <span class="icon">📖</span> API 文档
+      </button>
+      <button class="nav-btn" data-page="about">
+        <span class="icon">ℹ️</span> 关于
+      </button>
+      <button class="nav-btn" data-page="settings">
+        <span class="icon">⚙️</span> 设置
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-card">
+        <div class="status-title">服务状态</div>
+        <div class="status-row"><span><span class="dot on" id="dot-agnes"></span>Agnes API</span><span id="st-agnes">检测中</span></div>
+        <div class="status-row"><span><span class="dot on" id="dot-deepseek"></span>DeepSeek API</span><span id="st-deepseek">检测中</span></div>
+        <div class="status-route" id="status-route">路由: 自动判断</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="header tinted">
+    <span class="header-title" id="page-title">💬 智能对话</span>
+    <span class="badge" id="route-info">自动路由中...</span>
+  </div>
+
+  <!-- Chat Page -->
+  <div class="content" id="page-chat">
+    <div class="chat-scroll" id="chat-container">
+    </div>
+  </div>
+
+  <!-- Image Page -->
+  <div class="content" id="page-image" style="display:none;flex-direction:row;padding:0;gap:0">
+    <div class="img-panel-form tinted">
+      <h2>🎨 图片生成</h2>
+      <p class="img-subtitle">由 <span id="img-model-label">Agnes Image 2.1 Flash</span> 驱动，支持多图合成与风格迁移</p>
+
+      <label>提示词</label>
+      <textarea id="img-prompt" placeholder="描述你想生成的图片...
+
+例如：a cute cat wearing sunglasses on a beach at sunset, 4K quality, cinematic lighting"></textarea>
+
+      <div class="img-options-row">
+        <div class="img-option">
+          <label>清晰度</label>
+          <select id="img-size" onchange="updateImagePreset()">
+            <option value="1K">1K（标清）</option>
+            <option value="2K">2K（高清）</option>
+            <option value="3K">3K（超清）</option>
+            <option value="4K">4K（超高清）</option>
+          </select>
+        </div>
+        <div class="img-option">
+          <label>画面比例</label>
+          <select id="img-ratio" onchange="updateImagePreset()">
+            <option value="1:1">1:1 方形</option>
+            <option value="16:9">16:9 横屏</option>
+            <option value="9:16">9:16 竖屏</option>
+            <option value="4:3">4:3 传统</option>
+            <option value="3:4">3:4 竖版</option>
+            <option value="3:2">3:2 摄影</option>
+            <option value="2:3">2:3 肖像</option>
+            <option value="21:9">21:9 超宽</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size: var(--fs-12);color:var(--text3);margin-top:6px;text-align:center;font-family:var(--font-mono)" id="img-size-preview">输出: 1024 × 1024</div>
+
+      <div class="img-options-row" style="margin-top:4px">
+        <div class="img-option">
+          <label>数量</label>
+          <select id="img-n">
+            <option value="1">1 张</option>
+            <option value="2">2 张</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="advanced-toggle" onclick="toggleAdvanced('img-advanced')">
+        <span class="arrow">▶</span> 高级选项 <span class="label-hint">反向提示词 · 参考图</span>
+      </button>
+      <div class="advanced-panel" id="img-advanced">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px;font-size: var(--fs-13);color:var(--text)">
+          <input type="checkbox" id="img-return-base64" style="accent-color:var(--accent);width:14px;height:14px;">
+          返回 Base64 编码（不生成公开 URL）
+        </label>
+        <label>反向提示词 <span class="label-hint">（不想要的内容）</span></label>
+        <textarea class="negative-input" id="img-negative-prompt" placeholder="例如：blurry, low quality, ugly, deformed fingers, extra limbs, text, watermark"></textarea>
+        <label>参考图 <span class="label-hint">（拖拽或点击上传，最多 4 张）</span></label>
+        <div class="ref-images" id="img-ref-images">
+          <label class="ref-add" id="img-ref-add" title="添加参考图">
+            ＋
+            <input type="file" accept="image/*" multiple onchange="handleRefFiles(this, 'img-ref-images')">
+          </label>
+        </div>
+      </div>
+
+      <button id="btn-generate" onclick="generateImage()">🚀 生成图片</button>
+      <div class="img-history-label" id="history-label" style="display:none">生成历史</div>
+      <div id="img-result"></div>
+    </div>
+
+    <div class="img-panel-gallery" id="img-gallery">
+      <div class="gallery-empty">
+        <div class="gallery-empty-icon">🖼️</div>
+        <div>图片预览区</div>
+        <div>在左侧输入提示词并点击生成，图片将显示在这里</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Page -->
+  <div class="content" id="page-video" style="display:none;flex-direction:row;padding:0;gap:0">
+    <div class="img-panel-form tinted">
+      <h2>🎬 视频生成</h2>
+      <p class="img-subtitle">由 <span id="video-model-label">Agnes Video V2.0</span> 驱动，支持图生视频与关键帧动画</p>
+
+      <label>提示词</label>
+      <textarea id="video-prompt" placeholder="描述你想生成的视频...
+
+例如：a beautiful sunset over the ocean with waves gently rolling onto the shore, cinematic quality, slow motion"></textarea>
+
+      <button class="advanced-toggle" onclick="toggleAdvanced('video-advanced')">
+        <span class="arrow">▶</span> 高级选项 <span class="label-hint">分辨率 · 反向提示词 · 参考图</span>
+      </button>
+      <div class="advanced-panel" id="video-advanced">
+        <label>画面比例 &amp; 清晰度</label>
+        <div class="video-preset-row">
+          <div class="video-preset-item">
+            <select id="video-aspect" onchange="updateVideoPreset()">
+              <option value="16:9">16:9 横屏</option>
+              <option value="9:16">9:16 竖屏</option>
+              <option value="1:1">1:1 方形</option>
+              <option value="4:3">4:3 传统</option>
+              <option value="3:4">3:4 竖版</option>
+            </select>
+          </div>
+          <div class="video-preset-item">
+            <select id="video-quality" onchange="updateVideoPreset()">
+              <option value="720p">720p 高清</option>
+              <option value="480p">480p 标清</option>
+              <option value="1080p">1080p 全高清</option>
+            </select>
+          </div>
+        </div>
+
+        <label>时长 &amp; 帧率</label>
+        <div class="video-preset-row">
+          <div class="video-preset-item">
+            <select id="video-duration" onchange="updateVideoPreset()">
+              <option value="5">约 5 秒</option>
+              <option value="3">约 3 秒</option>
+              <option value="10">约 10 秒</option>
+            </select>
+          </div>
+          <div class="video-preset-item">
+            <select id="video-fps" onchange="updateVideoPreset()">
+              <option value="24">24 fps</option>
+              <option value="30">30 fps</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="video-calc-info" id="video-calc-info">
+          实际参数: 1280×720 · 121 帧 · ~5.0 秒
+        </div>
+
+        <label>随机种子 &amp; 推理步数</label>
+        <div class="video-preset-row">
+          <div class="video-preset-item">
+            <input type="number" id="video-seed" placeholder="种子 (可选)" style="width:100%;background: var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size: var(--fs-14);outline:none;font-family:var(--font)">
+          </div>
+          <div class="video-preset-item">
+            <input type="number" id="video-steps" placeholder="推理步数 (可选)" min="1" style="width:100%;background: var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size: var(--fs-14);outline:none;font-family:var(--font)">
+          </div>
+        </div>
+
+        <label>反向提示词 <span class="label-hint">（不想要的内容）</span></label>
+        <textarea class="negative-input" id="video-negative-prompt" placeholder="例如：people, text, watermark, blurry, distorted, low quality"></textarea>
+        <label>参考图 <span class="label-hint">（拖拽或点击上传。单张=图生视频，多张=关键帧）</span></label>
+        <div class="ref-images" id="video-ref-images">
+          <label class="ref-add" id="video-ref-add" title="添加参考图">
+            ＋
+            <input type="file" accept="image/*" multiple onchange="handleRefFiles(this, 'video-ref-images')">
+          </label>
+        </div>
+      </div>
+
+      <button id="btn-video-generate" onclick="generateVideo()">🎬 生成视频</button>
+
+      <div id="video-progress" style="display:none;margin-top:16px;padding:14px;background: var(--surface2);border-radius:10px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="loading"><span></span><span></span><span></span></div>
+          <span style="font-size: var(--fs-13);color:var(--text2)" id="video-progress-text">正在生成视频，请耐心等待...</span>
+        </div>
+        <div style="font-size: var(--fs-12);color:var(--text3);margin-top:8px;font-family:var(--font-mono)" id="video-progress-status"></div>
+      </div>
+
+      <div class="img-history-label" id="video-history-label" style="display:none">生成历史</div>
+      <div id="video-result"></div>
+    </div>
+
+    <div class="img-panel-gallery" id="video-gallery">
+      <div class="gallery-empty">
+        <div class="gallery-empty-icon">🎬</div>
+        <div>视频预览区</div>
+        <div>在左侧输入提示词并点击生成，视频将显示在这里</div>
+        <div style="font-size: var(--fs-12);color:var(--text3);margin-top:8px">视频生成通常需要 1-5 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Docs Page -->
+  <div class="content" id="page-docs" style="display:none;padding:28px 24px;overflow-y:auto">
+    <div>
+      <h2>📖 API 参考文档</h2>
+      <p>基于官方文档整理的关键参数、尺寸对照表和最佳实践。点击模型名称可展开查看对应文档。</p>
+
+      <!-- Image Model Selector -->
+      <div class="docs-model-section">
+        <button class="docs-model-toggle" onclick="toggleDocsModel('docs-image-models', this)">
+          🖼️ <span id="docs-image-model-label">Image 2.1 Flash</span>
+          <span class="arrow">▶</span>
+        </button>
+        <div class="docs-model-content" id="docs-image-models">
+          <div class="docs-tabs">
+            <button class="docs-tab active" onclick="switchDocsTab('image-2.1', this)">Agnes Image 2.1 Flash</button>
+            <button class="docs-tab" onclick="switchDocsTab('image-2.5', this)">Agnes Image 2.5 Flash</button>
+          </div>
+          <div id="docs-image-2.1" class="docs-model-body">
+            <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
+              <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
+                <tr><td>模型名称</td><td><code>agnes-image-2.1-flash</code></td></tr>
+                <tr><td>API Endpoint</td><td><code>POST /v1/images/generations</code></td></tr>
+                <tr><td>当前价格</td><td style="color:var(--agnes)">$0 / 张（免费）</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">请求参数</h3>
+              <table class="docs-table">
+                <tr><th style="width:150px">参数</th><th style="width:70px">类型</th><th style="width:60px">必填</th><th>说明</th></tr>
+                <tr><td><code>model</code></td><td>string</td><td>✅</td><td>固定为 <code>agnes-image-2.1-flash</code></td></tr>
+                <tr><td><code>prompt</code></td><td>string</td><td>✅</td><td>图像生成或编辑的文本指令</td></tr>
+                <tr><td><code>size</code></td><td>string</td><td>✅</td><td>尺寸档位：<code>1K</code> / <code>2K</code> / <code>3K</code> / <code>4K</code></td></tr>
+                <tr><td><code>ratio</code></td><td>string</td><td></td><td>宽高比，默认 <code>1:1</code>。支持 8 种</td></tr>
+                <tr><td><code>image</code></td><td>string[]</td><td>图生图必填</td><td>输入图像 URL 或 Data URI（放 <code>extra_body.image</code>）</td></tr>
+                <tr><td><code>return_base64</code></td><td>boolean</td><td></td><td>文生图时返回 Base64 编码</td></tr>
+                <tr><td><code>extra_body.response_format</code></td><td>string</td><td></td><td><code>"url"</code> 或 <code>"b64_json"</code></td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">尺寸档位 × 比例对照表</h3>
+              <div style="overflow-x:auto"><table class="docs-table docs-size-table">
+                <tr><th>Ratio</th><th>1K</th><th>2K</th><th>3K</th><th>4K</th></tr>
+                <tr><td><code>1:1</code></td><td>1024×1024</td><td>2048×2048</td><td>3072×3072</td><td>4096×4096</td></tr>
+                <tr><td><code>16:9</code></td><td>1312×736</td><td>2624×1472</td><td>3936×2208</td><td>5248×2944</td></tr>
+                <tr><td><code>9:16</code></td><td>736×1312</td><td>1472×2624</td><td>2208×3936</td><td>2944×5248</td></tr>
+                <tr><td><code>4:3</code></td><td>1152×864</td><td>2304×1728</td><td>3456×2592</td><td>4608×3456</td></tr>
+                <tr><td><code>3:4</code></td><td>864×1152</td><td>1728×2304</td><td>2592×3456</td><td>3456×4608</td></tr>
+                <tr><td><code>3:2</code></td><td>1248×832</td><td>2496×1664</td><td>3744×2496</td><td>4992×3328</td></tr>
+                <tr><td><code>2:3</code></td><td>832×1248</td><td>1664×2496</td><td>2496×3744</td><td>3328×4992</td></tr>
+                <tr><td><code>21:9</code></td><td>1568×672</td><td>3136×1344</td><td>4704×2016</td><td>6272×2688</td></tr>
+              </table></div>
+              <div class="docs-note">⚠️ <code>1920×1080</code> 等精确尺寸不是原生输出，会被映射到最近的档位。如需 16:9 素材，建议用 <code>size: "2K" + ratio: "16:9"</code>（输出 2624×1472），再下游裁剪。</div>
+            </div>
+            <div class="docs-card"><h3 class="docs-h3">⚠️ 常见错误</h3>
+              <table class="docs-table">
+                <tr><th style="width:220px">错误</th><th>正确做法</th></tr>
+                <tr><td>顶层放 <code>response_format</code></td><td>应放在 <code>extra_body.response_format</code></td></tr>
+                <tr><td>图生图传 <code>tags: ["img2img"]</code></td><td>不需要 tags，直接在 <code>extra_body.image</code> 提供图片</td></tr>
+                <tr><td>输入图片 URL 不可公开访问</td><td>改用 Data URI Base64 编码</td></tr>
+                <tr><td>客户端超时太短</td><td>建议 60s–360s，复杂图可能需几十秒</td></tr>
+              </table></div>
+          </div>
+          <div id="docs-image-2.5" class="docs-model-body" style="display:none">
+            <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
+              <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
+                <tr><td>模型名称</td><td><code>agnes-image-2.5-flash</code></td></tr>
+                <tr><td>API Endpoint</td><td><code>POST /v1/images/generations</code></td></tr>
+                <tr><td>核心优化</td><td>高信息密度图像、复杂视觉细节和语义对齐，整体能力全面超过 2.1 Flash</td></tr>
+                <tr><td>当前价格</td><td style="color:var(--agnes)">$0 / 张（免费）</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">核心能力</h3>
+              <div class="docs-grid">
+                <div class="docs-tag">🪄 文生图</div><div class="docs-tag">🖼️ 图生图</div>
+                <div class="docs-tag">🧩 多图合成</div><div class="docs-tag">📐 构图保留</div>
+                <div class="docs-tag">📊 高信息密度</div><div class="docs-tag">📏 灵活尺寸控制</div>
+                <div class="docs-tag">🌐 URL / Base64 输出</div>
+              </div></div>
+            <div class="docs-card"><h3 class="docs-h3">请求参数</h3>
+              <table class="docs-table">
+                <tr><th style="width:150px">参数</th><th style="width:70px">类型</th><th style="width:60px">必填</th><th>说明</th></tr>
+                <tr><td><code>model</code></td><td>string</td><td>✅</td><td>固定为 <code>agnes-image-2.5-flash</code></td></tr>
+                <tr><td><code>prompt</code></td><td>string</td><td>✅</td><td>图像生成或编辑的文本指令</td></tr>
+                <tr><td><code>size</code></td><td>string</td><td>✅</td><td>输出尺寸档位。推荐 <code>1K</code> / <code>2K</code> / <code>3K</code> / <code>4K</code></td></tr>
+                <tr><td><code>ratio</code></td><td>string</td><td></td><td>宽高比，默认 <code>1:1</code>。支持 8 种：1:1 / 3:4 / 4:3 / 16:9 / 9:16 / 2:3 / 3:2 / 21:9</td></tr>
+                <tr><td><code>image</code></td><td>string[]</td><td>图生图必填</td><td>输入图像 URL 或 Data URI Base64。多图合成传多张</td></tr>
+                <tr><td><code>return_base64</code></td><td>boolean</td><td></td><td>文生图时返回 Base64 编码</td></tr>
+                <tr><td><code>extra_body.response_format</code></td><td>string</td><td></td><td><code>"url"</code> 或 <code>"b64_json"</code></td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">尺寸档位 × 比例对照表</h3>
+              <div style="overflow-x:auto"><table class="docs-table docs-size-table">
+                <tr><th>Ratio</th><th>1K</th><th>2K</th><th>3K</th><th>4K</th></tr>
+                <tr><td><code>1:1</code></td><td>1024×1024</td><td>2048×2048</td><td>3072×3072</td><td>4096×4096</td></tr>
+                <tr><td><code>16:9</code></td><td>1312×736</td><td>2624×1472</td><td>3936×2208</td><td>5248×2944</td></tr>
+                <tr><td><code>9:16</code></td><td>736×1312</td><td>1472×2624</td><td>2208×3936</td><td>2944×5248</td></tr>
+                <tr><td><code>4:3</code></td><td>1152×864</td><td>2304×1728</td><td>3456×2592</td><td>4608×3456</td></tr>
+                <tr><td><code>3:4</code></td><td>864×1152</td><td>1728×2304</td><td>2592×3456</td><td>3456×4608</td></tr>
+                <tr><td><code>3:2</code></td><td>1248×832</td><td>2496×1664</td><td>3744×2496</td><td>4992×3328</td></tr>
+                <tr><td><code>2:3</code></td><td>832×1248</td><td>1664×2496</td><td>2496×3744</td><td>3328×4992</td></tr>
+                <tr><td><code>21:9</code></td><td>1568×672</td><td>3136×1344</td><td>4704×2016</td><td>6272×2688</td></tr>
+              </table></div>
+              <div class="docs-note">⚠️ <code>1920×1080</code> 等精确尺寸不是原生输出，会被映射到最近的档位。如需 16:9 素材，建议用 <code>size: "2K" + ratio: "16:9"</code>（输出 2624×1472），再下游裁剪。</div>
+            </div>
+            <div class="docs-card"><h3 class="docs-h3">⚠️ 常见错误</h3>
+              <table class="docs-table">
+                <tr><th style="width:220px">错误</th><th>正确做法</th></tr>
+                <tr><td>顶层放 <code>response_format</code></td><td>应放在 <code>extra_body.response_format</code></td></tr>
+                <tr><td>图生图传 <code>tags: ["img2img"]</code></td><td>不需要 tags，直接在 <code>extra_body.image</code> 提供图片</td></tr>
+                <tr><td>输入图片 URL 不可公开访问</td><td>改用 Data URI Base64 编码</td></tr>
+                <tr><td>客户端超时太短</td><td>建议 60s–360s，复杂图可能需几十秒</td></tr>
+              </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Model Selector -->
+      <div class="docs-model-section">
+        <button class="docs-model-toggle" onclick="toggleDocsModel('docs-video-models', this)">
+          🎬 <span id="docs-video-model-label">Video V2.0</span>
+          <span class="arrow">▶</span>
+        </button>
+        <div class="docs-model-content" id="docs-video-models">
+          <div class="docs-tabs">
+            <button class="docs-tab active" onclick="switchDocsTab('video-2.0', this)">Agnes Video V2.0</button>
+            <button class="docs-tab" onclick="switchDocsTab('video-2.5-flash', this)">Agnes Video 2.5 Flash</button>
+          </div>
+          <div id="docs-video-2.0" class="docs-model-body">
+            <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
+              <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
+                <tr><td>模型名称</td><td><code>agnes-video-v2.0</code></td></tr>
+                <tr><td>创建任务</td><td><code>POST /v1/videos</code></td></tr>
+                <tr><td>查询结果</td><td><code>GET /agnesapi?video_id=...</code></td></tr>
+                <tr><td>生成方式</td><td>异步任务：先创建 → 轮询状态 → 获取视频 URL</td></tr>
+                <tr><td>当前价格</td><td style="color:var(--agnes)">$0 / 秒（免费）</td></tr>
+                <tr><td>速率限制</td><td>约 1 次 / 分钟</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">核心能力</h3>
+              <div class="docs-grid">
+                <div class="docs-tag">🎥 文生视频</div><div class="docs-tag">🖼️ 图生视频</div>
+                <div class="docs-tag">🔑 关键帧动画</div><div class="docs-tag">🎬 电影级输出</div>
+                <div class="docs-tag">📐 场景运动控制</div><div class="docs-tag">👁️ 视觉一致性</div>
+              </div></div>
+            <div class="docs-card"><h3 class="docs-h3">创建任务参数</h3>
+              <table class="docs-table">
+                <tr><th style="width:160px">参数</th><th style="width:70px">类型</th><th style="width:60px">必填</th><th>说明</th></tr>
+                <tr><td><code>model</code></td><td>string</td><td>✅</td><td>固定为 <code>agnes-video-v2.0</code></td></tr>
+                <tr><td><code>prompt</code></td><td>string</td><td>✅</td><td>视频内容的文本描述</td></tr>
+                <tr><td><code>image</code></td><td>string</td><td></td><td>图生视频的参考图（纯 Base64 或 URL）</td></tr>
+                <tr><td><code>mode</code></td><td>string</td><td></td><td><code>ti2vid</code>（图生视频）或 <code>keyframes</code>（关键帧）</td></tr>
+                <tr><td><code>width</code></td><td>integer</td><td></td><td>视频宽度，默认 1152</td></tr>
+                <tr><td><code>height</code></td><td>integer</td><td></td><td>视频高度，默认 768</td></tr>
+                <tr><td><code>num_frames</code></td><td>integer</td><td></td><td>视频帧数，≤441 且须为 <strong>8n+1</strong></td></tr>
+                <tr><td><code>frame_rate</code></td><td>number</td><td></td><td>帧率 1–60，默认 24</td></tr>
+                <tr><td><code>num_inference_steps</code></td><td>integer</td><td></td><td>推理步数，更多=更高质量</td></tr>
+                <tr><td><code>seed</code></td><td>integer</td><td></td><td>随机种子，用于可复现结果</td></tr>
+                <tr><td><code>negative_prompt</code></td><td>string</td><td></td><td>反向提示词</td></tr>
+                <tr><td><code>extra_body.image</code></td><td>array</td><td></td><td>关键帧模式的输入图片数组</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">分辨率预设（3 档 × 5 比例）</h3>
+              <div style="overflow-x:auto"><table class="docs-table docs-size-table">
+                <tr><th>Ratio</th><th>480p</th><th>720p</th><th>1080p</th></tr>
+                <tr><td><code>16:9</code></td><td>854×480</td><td>1280×720</td><td>1920×1080</td></tr>
+                <tr><td><code>9:16</code></td><td>480×854</td><td>720×1280</td><td>1080×1920</td></tr>
+                <tr><td><code>1:1</code></td><td>480×480</td><td>720×720</td><td>1080×1080</td></tr>
+                <tr><td><code>4:3</code></td><td>640×480</td><td>960×720</td><td>1440×1080</td></tr>
+                <tr><td><code>3:4</code></td><td>480×640</td><td>720×960</td><td>1080×1440</td></tr>
+              </table></div>
+              <div class="docs-note">💡 Agnes 会自动将不匹配的尺寸映射到最近的预设档位。</div>
+            </div>
+            <div class="docs-card"><h3 class="docs-h3">时长 &amp; 帧率对照（8n+1 规则）</h3>
+              <table class="docs-table">
+                <tr><th>目标时长</th><th>24 fps</th><th>30 fps</th></tr>
+                <tr><td>约 3 秒</td><td><code>num_frames: 73</code></td><td><code>num_frames: 89</code></td></tr>
+                <tr><td>约 5 秒</td><td><code>num_frames: 121</code></td><td><code>num_frames: 153</code></td></tr>
+                <tr><td>约 10 秒</td><td><code>num_frames: 241</code></td><td><code>num_frames: 297</code></td></tr>
+                <tr><td>约 18 秒（上限）</td><td><code>num_frames: 441</code></td><td><code>num_frames: 441</code></td></tr>
+              </table>
+              <div class="docs-note">📐 公式：<code>seconds = num_frames / frame_rate</code>，<code>num_frames</code> 必须 ≤ 441 且为 8n+1。</div>
+            </div>
+            <div class="docs-card"><h3 class="docs-h3">任务状态</h3>
+              <table class="docs-table">
+                <tr><th style="width:130px">状态</th><th>说明</th></tr>
+                <tr><td><code>queued</code></td><td>任务在队列中等待</td></tr>
+                <tr><td><code>in_progress</code></td><td>视频正在生成</td></tr>
+                <tr><td><code>completed</code></td><td>生成成功，视频 URL 在 <code>metadata.url</code></td></tr>
+                <tr><td><code>failed</code></td><td>生成失败，查看 <code>error</code> 字段</td></tr>
+              </table></div>
+          </div>
+          <div id="docs-video-2.5-flash" class="docs-model-body" style="display:none">
+            <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
+              <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
+                <tr><td>模型名称</td><td><code>agnes-video-2.5-flash</code></td></tr>
+                <tr><td>创建任务</td><td><code>POST /v1/videos</code></td></tr>
+                <tr><td>查询结果</td><td><code>GET /agnesapi?video_id=VIDEO_ID&model_name=agnes-video-2.5-flash</code></td></tr>
+                <tr><td>生成方式</td><td>异步任务：先创建 → 轮询状态 → 获取视频 URL</td></tr>
+                <tr><td>当前价格</td><td style="color:var(--agnes)">~~$0.025/秒~~ → <strong>$0 / 秒</strong>（限时免费）</td></tr>
+                <tr><td>速率限制</td><td>约 1 次 / 分钟</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">与 Video V2.0 的差异</h3>
+              <table class="docs-table">
+                <tr><th style="width:160px">校验项</th><th>Flash 规则</th><th>校验失败响应</th></tr>
+                <tr><td><code>size</code></td><td>仅支持 <code>"720P"</code></td><td>HTTP 400：<code>size must be 720P</code></td></tr>
+                <tr><td><code>images</code> 数量</td><td>最多 5 张</td><td>HTTP 400：<code>images length must not exceed 5</code></td></tr>
+                <tr><td><code>audios</code> 数量</td><td>最多 3 段</td><td>HTTP 400：<code>audios length must not exceed 3</code></td></tr>
+                <tr><td><code>videos</code> 输入</td><td>不支持</td><td>HTTP 400：<code>videos is not supported</code></td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">请求参数</h3>
+              <table class="docs-table">
+                <tr><th style="width:150px">参数</th><th style="width:70px">类型</th><th style="width:60px">必填</th><th>说明</th></tr>
+                <tr><td><code>model</code></td><td>string</td><td>✅</td><td>固定为 <code>agnes-video-2.5-flash</code></td></tr>
+                <tr><td><code>prompt</code></td><td>string</td><td>✅</td><td>视频内容描述。Reference 模式可使用 <code>&lt;Picture N&gt;</code> 和 <code>&lt;Audio N&gt;</code></td></tr>
+                <tr><td><code>mode</code></td><td>string</td><td>✅</td><td><code>text</code> / <code>keyframe</code> / <code>reference</code></td></tr>
+                <tr><td><code>seconds</code></td><td>string</td><td></td><td>视频时长，<code>"4"</code>–<code>"12"</code>，默认 <code>"5"</code></td></tr>
+                <tr><td><code>size</code></td><td>string</td><td></td><td>Flash 固定为 <code>"720P"</code>；其他值返回 HTTP 400</td></tr>
+                <tr><td><code>aspect_ratio</code></td><td>string</td><td></td><td>默认 <code>16:9</code>，支持 6 种（见下）</td></tr>
+                <tr><td><code>seed</code></td><td>integer</td><td></td><td>随机种子</td></tr>
+                <tr><td><code>n</code></td><td>integer</td><td></td><td>当前仅支持 <code>1</code></td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">模式专用参数</h3>
+              <table class="docs-table">
+                <tr><th style="width:130px">参数</th><th style="width:80px">类型</th><th style="width:80px">适用模式</th><th>说明</th></tr>
+                <tr><td><code>first_frame</code></td><td>string</td><td>keyframe</td><td>首帧图片 URL；与 <code>last_frame</code> 至少提供一个</td></tr>
+                <tr><td><code>last_frame</code></td><td>string</td><td>keyframe</td><td>尾帧图片 URL</td></tr>
+                <tr><td><code>images</code></td><td>string[]</td><td>reference</td><td>参考图片 URL 列表，Flash 最多支持 5 张</td></tr>
+                <tr><td><code>audios</code></td><td>string[]</td><td>reference</td><td>参考音频 URL 列表，Flash 最多支持 3 段</td></tr>
+                <tr><td><code>videos</code></td><td>object[]</td><td>reference</td><td>Flash 不支持</td></tr>
+              </table></div>
+            <div class="docs-card"><h3 class="docs-h3">视频尺寸与画幅（720P 固定）</h3>
+              <div style="overflow-x:auto"><table class="docs-table docs-size-table">
+                <tr><th>Aspect Ratio</th><th>输出像素</th></tr>
+                <tr><td><code>21:9</code></td><td>1680×720</td></tr>
+                <tr><td><code>16:9</code></td><td>1280×704</td></tr>
+                <tr><td><code>4:3</code></td><td>960×720</td></tr>
+                <tr><td><code>1:1</code></td><td>720×720</td></tr>
+                <tr><td><code>3:4</code></td><td>720×960</td></tr>
+                <tr><td><code>9:16</code></td><td>720×1280</td></tr>
+              </table></div>
+              <div class="docs-note">💡 <code>16:9</code> 的 720P 输出实测为 <code>1280×704</code>。</div>
+            </div>
+            <div class="docs-card"><h3 class="docs-h3">⚠️ Flash 专属错误</h3>
+              <table class="docs-table">
+                <tr><th style="width:200px">错误</th><th>原因</th></tr>
+                <tr><td><code>size must be 720P</code></td><td><code>size</code> 不是 <code>"720P"</code></td></tr>
+                <tr><td><code>images length must not exceed 5</code></td><td>参考图片超过 5 张</td></tr>
+                <tr><td><code>audios length must not exceed 3</code></td><td>参考音频超过 3 段</td></tr>
+                <tr><td><code>videos is not supported</code></td><td>传入了有效的 <code>videos</code> 内容</td></tr>
+              </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Key Configuration -->
+      <div style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border)">
+        <h3 style="font-size: var(--fs-18);font-weight:700;margin-bottom:4px">🔑 API Key 配置</h3>
+        <p style="font-size: var(--fs-13);color:var(--text2);margin-bottom:20px">在前端直接管理 API Key，修改后立即生效（会写入 .env 文件）。</p>
+
+        <div class="api-config-block">
+          <div class="api-label" style="color:var(--agnes)">● Agnes API</div>
+          <div class="api-field">
+            <label>API Key</label>
+            <div class="api-field-row">
+              <input type="password" id="agnes-api-key" placeholder="sk-...">
+              <button type="button" onclick="toggleKeyVisibility('agnes-api-key')">👁️ 显示</button>
+            </div>
+          </div>
+          <div class="api-field">
+            <label>Base URL</label>
+            <input type="text" id="agnes-base-url" placeholder="https://apihub.agnes-ai.com/v1">
+          </div>
+        </div>
+
+        <div class="api-config-block" style="margin-top:12px">
+          <div class="api-label" style="color:var(--deepseek)">● DeepSeek API</div>
+          <div class="api-field">
+            <label>API Key</label>
+            <div class="api-field-row">
+              <input type="password" id="deepseek-api-key" placeholder="sk-...">
+              <button type="button" onclick="toggleKeyVisibility('deepseek-api-key')">👁️ 显示</button>
+            </div>
+          </div>
+          <div class="api-field">
+            <label>Base URL</label>
+            <input type="text" id="deepseek-base-url" placeholder="https://api.deepseek.com/v1">
+          </div>
+        </div>
+
+        <button onclick="saveApiKey()" class="api-save-btn">💾 保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Page -->
+  <div class="content" id="page-about" style="display:none;padding:28px;overflow-y:auto">
+    <div>
+      <h2 style="font-family:'WenxinXileti',sans-serif">关于「不绘来世」</h2>
+      <div style="background: var(--surface);border-radius:var(--radius);padding:20px 22px;border:1px solid var(--border)">
+        <h3 style="margin-bottom:12px;font-size: var(--fs-15);font-weight:700">路由策略</h3>
+        <table>
+          <tr><td style="color:var(--text2);width:220px">🖼️ 图片/多模态</td><td style="color:var(--agnes);font-weight:600">→ Agnes</td></tr>
+          <tr><td style="color:var(--text2)">🎨 图片/视频生成</td><td style="color:var(--agnes);font-weight:600">→ Agnes</td></tr>
+          <tr><td style="color:var(--text2)">📝 翻译、摘要、简单问答</td><td style="color:var(--agnes);font-weight:600">→ Agnes</td></tr>
+          <tr><td style="color:var(--text2)">🧠 代码、数学、逻辑</td><td style="color:var(--deepseek);font-weight:600">→ DeepSeek</td></tr>
+          <tr><td style="color:var(--text2)">📏 默认（< 200字 / ≥ 200字）</td><td style="color:var(--agnes)">→ Agnes / <span style="color:var(--deepseek)">DeepSeek</span></td></tr>
+        </table>
+      </div>
+      <div class="about-info">
+        <div>模型：<span style="font-family:'AveriaGruesa',sans-serif">Agnes 2.0 Flash</span> / <span style="font-family:'AveriaGruesa',sans-serif">DeepSeek V4 Pro</span></div>
+        <div>API 端口：8800（OpenAI 兼容格式）</div>
+        <div>图片生成：<span style="font-family:'AveriaGruesa',sans-serif">Agnes Image 2.1 Flash</span></div>
+        <div>视频生成：<span style="font-family:'AveriaGruesa',sans-serif">Agnes Video V2.0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div class="content" id="page-settings" style="display:none;padding:28px;overflow-y:auto">
+    <div>
+
+      <!-- Background -->
+      <div class="settings-section">
+        <h3>🖼️ 自定义背景</h3>
+        <p>上传一张图片作为应用背景，图片会被模糊处理以确保文字可读。</p>
+        <label class="bg-upload-zone" id="bg-upload-zone">
+          <div class="upload-preview" id="bg-preview" style="display:none"></div>
+          <span class="upload-text" id="bg-upload-text">📁 点击上传背景图片（或拖拽到此处）</span>
+          <input type="file" accept="image/*" id="bg-file-input">
+        </label>
+        <div class="opacity-row">
+          <label>🔍 背景模糊</label>
+          <input type="range" id="blur-slider" min="0" max="30" value="12" oninput="ThemeManager.setBlur(this.value)">
+          <span class="opacity-val" id="blur-val">12px</span>
+        </div>
+        <div class="opacity-row">
+          <label>☀️ 背景亮度</label>
+          <input type="range" id="brightness-slider" min="10" max="100" value="35" oninput="ThemeManager.setBrightness(this.value)">
+          <span class="opacity-val" id="brightness-val">35%</span>
+        </div>
+        <button class="btn-reset" id="clear-bg-btn" style="display:none;margin-top:12px" onclick="ThemeManager.clearBackground()">🗑️ 清除背景图片</button>
+      </div>
+
+      <!-- Preset Themes -->
+      <div class="settings-section">
+        <h3>🎨 预设主题</h3>
+        <p>选择一套配色方案。</p>
+        <div class="preset-grid" id="preset-grid"></div>
+      </div>
+
+      <!-- Theme Transparency -->
+      <div class="settings-section">
+        <h3>🎭 主题透明度</h3>
+        <p>控制侧边栏、顶部栏、输入框的透明程度，让背景图透出来。</p>
+        <div class="opacity-row">
+          <label>🎨 界面透明</label>
+          <input type="range" id="surface-alpha-slider" min="0" max="100" value="100" oninput="ThemeManager.setSurfaceAlpha(this.value)">
+          <span class="opacity-val" id="surface-alpha-val">100%</span>
+        </div>
+      </div>
+
+      <!-- Font Size -->
+      <div class="settings-section">
+        <h3>🔤 字体大小</h3>
+        <p>调整界面文字大小。</p>
+        <div class="font-size-options" id="font-size-options">
+          <button class="font-size-btn" data-size="small"  onclick="ThemeManager.setFontSize('small')">小</button>
+          <button class="font-size-btn" data-size="medium" onclick="ThemeManager.setFontSize('medium')">中</button>
+          <button class="font-size-btn" data-size="large"  onclick="ThemeManager.setFontSize('large')">大</button>
+        </div>
+      </div>
+
+      <!-- Proxy Config -->
+      <div class="settings-section">
+        <h3>🌐 代理配置</h3>
+        <p>如果你在中国大陆访问 Agnes 超时，可以在此配置代理。DeepSeek 国内直连，一般不需要代理。</p>
+        <div class="api-field">
+          <label>Agnes 代理地址</label>
+          <input type="text" id="agnes-proxy" placeholder="http://127.0.0.1:7890（留空则不使用代理）">
+        </div>
+        <div class="api-field" style="margin-top:8px">
+          <label>DeepSeek 代理地址</label>
+          <input type="text" id="deepseek-proxy" placeholder="http://127.0.0.1:7890（一般留空）">
+        </div>
+        <p style="font-size: var(--fs-12); color: var(--text3); margin-top: 8px;">
+          💡 Clash/V2Ray 用户常用端口：7890 或 10809
+        </p>
+      </div>
+
+      <!-- Reset -->
+      <button class="btn-save-settings" onclick="ThemeManager.saveAllAndNotify()">💾 保存设置</button>
+      <button class="btn-reset" onclick="ThemeManager.reset()">🔄 恢复默认设置</button>
+
+    </div>
+  </div>
+
+  <!-- Input (Chat) -->
+  <div class="input-area tinted" id="input-chat">
+    <div class="input-row">
+      <textarea id="chat-input" rows="1" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" onkeydown="handleKey(event)"></textarea>
+      <button id="btn-send" onclick="sendMessage()">发送</button>
+    </div>
+    <div class="input-options">
+      <select id="backend-select" onchange="updateRouteInfo()">
+        <option value="auto">🤖 自动路由</option>
+        <option value="agnes">🟢 强制 Agnes</option>
+        <option value="deepseek">🔵 强制 DeepSeek</option>
+      </select>
+      <label class="search-toggle" title="启用后 DeepSeek 会联网搜索最新信息">
+        <input type="checkbox" id="search-toggle" onchange="updateRouteInfo()">
+        🌐 联网搜索
+      </label>
+      <label class="search-toggle" id="research-label" title="DeepSeek 先搜索研究角色/主题，Agnes 再根据信息创作">
+        <input type="checkbox" id="research-toggle" onchange="updateRouteInfo()">
+        🧠 深度创作
+      </label>
+      <span class="model-tag" id="route-tag">自动判断后端</span>
+    </div>
+  </div>
+</main>
+
+<!-- Crop Modal -->
+<div class="crop-modal" id="crop-modal" style="display:none">
+  <div class="crop-container" id="crop-container">
+    <img id="crop-image" draggable="false" style="display:none">
+    <div class="crop-box" id="crop-box" style="display:none">
+      <div class="crop-handle nw" data-dir="nw"></div>
+      <div class="crop-handle ne" data-dir="ne"></div>
+      <div class="crop-handle sw" data-dir="sw"></div>
+      <div class="crop-handle se" data-dir="se"></div>
+    </div>
+  </div>
+  <div class="crop-actions">
+    <button onclick="confirmCrop()">✂️ 确认裁剪</button>
+    <button onclick="skipCrop()">📷 使用原图</button>
+    <button onclick="cancelCrop()">取消</button>
+  </div>
+</div>
+
+<script>
+// 动态获取 API 地址（从后端 /api/config 读取 host/port，避免硬编码）
+let API = '';
+
+async function initAPI() {
+  try {
+    const resp = await fetch('/api/config');
+    const data = await resp.json();
+    if (data.server && data.server.base_url) {
+      API = data.server.base_url;
+    } else {
+      // 降级：从当前页面 URL 推断
+      API = `${location.protocol}//${location.host}`;
+    }
+  } catch (e) {
+    // 完全降级：使用默认值
+    API = 'http://127.0.0.1:8800';
+  }
+  // 继续初始化
+  startApp();
+}
+
+// ========== Splash Screen ==========
+(function() {
+  const splash = document.getElementById('splash-screen');
+  const video = document.getElementById('splash-video');
+  const videoError = document.getElementById('splash-video-error');
+  if (!splash) return;
+
+  // If video fails to load, show default background
+  if (video) {
+    video.addEventListener('error', () => {
+      if (videoError) videoError.style.display = 'block';
+    });
+  }
+
+  // Click or key to dismiss
+  function dismissSplash() {
+    if (splash.classList.contains('hidden')) return;
+    splash.classList.add('hidden');
+    setTimeout(() => { splash.style.display = 'none'; }, 400);
+  }
+
+  splash.addEventListener('click', dismissSplash);
+  document.addEventListener('keydown', function handler(e) {
+    if (splash.offsetParent !== null) {
+      e.preventDefault();
+      dismissSplash();
+      document.removeEventListener('keydown', handler);
+    }
+  });
+})();
+
+// ========== Navigation ==========
+let currentImageModel = 'agnes-image-2.1-flash';
+let currentVideoModel = 'agnes-video-v2.0';
+
+const MODEL_NAMES = {
+  'agnes-image-2.1-flash': 'Agnes 2.1 Flash',
+  'agnes-image-2.5-flash': 'Agnes 2.5 Flash',
+  'agnes-video-v2.0': 'Agnes Video V2.0',
+  'agnes-video-2.5-flash': 'Agnes Video 2.5 Flash',
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.querySelector('.nav');
+  if (!nav) return;
+
+  nav.addEventListener('click', (e) => {
+    // Sub-model buttons
+    const subBtn = e.target.closest('.nav-sub-btn');
+    if (subBtn) {
+      const groupId = subBtn.closest('.nav-sub')?.id || '';
+      const model = subBtn.dataset.model;
+      // Deactivate siblings in same group
+      document.querySelectorAll(`#${groupId} .nav-sub-btn`).forEach(b => b.classList.remove('active'));
+      subBtn.classList.add('active');
+      if (groupId === 'image-models') {
+        currentImageModel = model;
+        localStorage.setItem('currentImageModel', model);
+        const label = document.getElementById('img-model-label');
+        if (label) label.textContent = MODEL_NAMES[model] || model;
+        showPage('image');
+      } else if (groupId === 'video-models') {
+        currentVideoModel = model;
+        localStorage.setItem('currentVideoModel', model);
+        const label = document.getElementById('video-model-label');
+        if (label) label.textContent = MODEL_NAMES[model] || model;
+        showPage('video');
+      }
+      refreshDocModels();
+      return;
+    }
+
+    // Group header buttons (图片生成 / 视频生成)
+    const groupBtn = e.target.closest('.nav-group-btn');
+    if (groupBtn) {
+      const group = groupBtn.closest('.nav-group');
+      const sub = group?.querySelector('.nav-sub');
+      const isOpen = sub?.classList.toggle('show');
+      groupBtn.classList.toggle('expanded', isOpen);
+      // Also deactivate all regular nav-btn active state
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      groupBtn.classList.add('active');
+      showPage(groupBtn.dataset.page);
+      return;
+    }
+
+    // Plain nav buttons
+    const plainBtn = e.target.closest('.nav-btn[data-page]');
+    if (plainBtn) {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      plainBtn.classList.add('active');
+      showPage(plainBtn.dataset.page);
+    }
+  });
+});
+
+function showPage(page) {
+  document.getElementById('page-chat').style.display = page === 'chat' ? 'flex' : 'none';
+  document.getElementById('page-image').style.display = page === 'image' ? 'flex' : 'none';
+  document.getElementById('page-video').style.display = page === 'video' ? 'flex' : 'none';
+  document.getElementById('page-docs').style.display = page === 'docs' ? 'block' : 'none';
+  document.getElementById('page-about').style.display = page === 'about' ? 'block' : 'none';
+  document.getElementById('page-settings').style.display = page === 'settings' ? 'block' : 'none';
+  document.getElementById('input-chat').style.display = page === 'chat' ? 'block' : 'none';
+  const titles = { chat: '💬 智能对话', image: '🎨 图片生成', video: '🎬 视频生成', docs: '📖 API 文档', about: 'ℹ️ 关于', settings: '⚙️ 设置' };
+  document.getElementById('page-title').textContent = titles[page] || '';
+  if (page === 'image' || page === 'video') {
+    // 图片/视频页：badge 显示当前选中的模型名（随侧边栏切换实时更新）
+    updateRouteInfo();
+  } else {
+    // 其余页：badge 显示固定的上下文说明
+    document.getElementById('route-info').textContent =
+      { chat: '自动路由中...', docs: 'Image & Video API 参考', about: '关于本应用', settings: '自定义主题与外观' }[page] || '';
+  }
+}
+
+function refreshDocModels() {
+  // Labels in the page sub-title area
+  const imgLabel = document.getElementById('img-model-label');
+  if (imgLabel) imgLabel.textContent = MODEL_NAMES[currentImageModel] || currentImageModel;
+  const vidLabel = document.getElementById('video-model-label');
+  if (vidLabel) vidLabel.textContent = MODEL_NAMES[currentVideoModel] || currentVideoModel;
+  // Doc page toggle labels
+  const docImgLabel = document.getElementById('docs-image-model-label');
+  if (docImgLabel) docImgLabel.textContent = MODEL_NAMES[currentImageModel]?.replace('agnes-image-', '').replace('-', ' ') || currentImageModel;
+  const docVidLabel = document.getElementById('docs-video-model-label');
+  if (docVidLabel) docVidLabel.textContent = MODEL_NAMES[currentVideoModel]?.replace('agnes-video-', '').replace('-', ' ') || currentVideoModel;
+}
+
+// ========== Chat ==========
+const chatContainer = document.getElementById('chat-container');
+const chatInput = document.getElementById('chat-input');
+const btnSend = document.getElementById('btn-send');
+let chatHistory = [];
+
+// Bind send button click
+btnSend.addEventListener('click', sendMessage);
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  const empty = chatContainer.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  addMessage('user', text);
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+
+  const loadId = addLoading();
+  const backend = document.getElementById('backend-select').value;
+  const enableSearch = document.getElementById('search-toggle').checked;
+  const isResearch = document.getElementById('research-toggle').checked;
+  const messages = [...chatHistory, { role: 'user', content: text }];
+
+  btnSend.disabled = true;
+
+  if (isResearch) {
+    document.getElementById('route-info').textContent = '🔍 DeepSeek 联网搜索中...';
+  }
+
+  try {
+    const reqBody = { messages, backend: backend === 'auto' ? null : backend };
+    if (enableSearch) reqBody.enable_search = true;
+    if (isResearch) reqBody.mode = 'research';
+
+    const resp = await fetch(API + '/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await resp.json();
+
+    removeLoading(loadId);
+
+    const reply = data.choices[0].message.content;
+    const route = data._router;
+    const research = data._research;
+
+    if (research && research.summary) {
+      addMessage('assistant', '🔍 **DeepSeek 联网搜索摘要：**\n\n' + research.summary + '\n\n---\n\n✨ **Agnes 创作结果：**\n\n' + reply, route);
+    } else {
+      addMessage('assistant', reply, route);
+    }
+    updateRouteInfo(route);
+
+    chatHistory.push({ role: 'user', content: text });
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+  } catch (e) {
+    removeLoading(loadId);
+    addMessage('assistant', '❌ 请求失败: ' + e.message + '\n\n请确认服务已启动：python launcher.py', { backend: 'error', reason: e.message });
+  }
+
+  btnSend.disabled = false;
+  chatInput.focus();
+}
+
+function addMessage(role, text, route) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+
+  let metaHtml = '';
+  if (route) {
+    if (route.backend === 'error') {
+      metaHtml = `<div class="meta"><span class="badge error">错误</span>${route.reason || ''}</div>`;
+    } else {
+      const cls = route.backend === 'agnes' ? 'agnes' : 'deepseek';
+      const name = route.backend === 'agnes' ? 'Agnes' : 'DeepSeek';
+      metaHtml = `<div class="meta"><span class="badge ${cls}">${name}</span>${route.reason || ''}</div>`;
+    }
+  }
+
+  const rendered = role === 'assistant' ? renderMarkdown(text) : escapeHtml(text);
+  div.innerHTML = `<div class="bubble">${rendered}</div>${metaHtml}`;
+  chatContainer.appendChild(div);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+let loadingCount = 0;
+function addLoading() {
+  const id = 'load-' + (++loadingCount);
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'msg assistant';
+  div.innerHTML = '<div class="loading"><span></span><span></span><span></span></div>';
+  chatContainer.appendChild(div);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  return id;
+}
+
+function removeLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function updateRouteInfo(route) {
+  const info = document.getElementById('route-info');
+  const tag = document.getElementById('route-tag');
+  const statusRoute = document.getElementById('status-route');
+
+  // 图片 / 视频页：header 右侧 badge 直接显示当前选中的模型名
+  const imgPage = document.getElementById('page-image');
+  const vidPage = document.getElementById('page-video');
+  if (imgPage && imgPage.style.display !== 'none') {
+    const model = currentImageModel;
+    info.textContent = MODEL_NAMES[model] || model;
+    if (tag) tag.textContent = '图片模型';
+    return;
+  }
+  if (vidPage && vidPage.style.display !== 'none') {
+    const model = currentVideoModel;
+    info.textContent = MODEL_NAMES[model] || model;
+    if (tag) tag.textContent = '视频模型';
+    return;
+  }
+
+  // 聊天页：根据 路由/联网搜索/深度创作 状态显示
+  const sel = document.getElementById('backend-select').value;
+  const isSearch = document.getElementById('search-toggle').checked;
+  const isResearch = document.getElementById('research-toggle').checked;
+
+  if (isResearch) {
+    const t = '深度创作';
+    tag.textContent = t;
+    info.textContent = 'DeepSeek 搜索 → Agnes 创作';
+    if (statusRoute) statusRoute.textContent = '路由: ' + t;
+    return;
+  }
+
+  if (sel !== 'auto') {
+    const t = sel === 'agnes' ? '强制 Agnes' : '强制 DeepSeek';
+    tag.textContent = t;
+    info.textContent = isSearch ? '🌐 联网搜索已启用' : '手动指定';
+    if (statusRoute) statusRoute.textContent = '路由: ' + t;
+    return;
+  }
+  if (route) {
+    const t = '路由: ' + route.backend.toUpperCase();
+    tag.textContent = t;
+    info.textContent = (isSearch ? '🌐 ' : '') + (route.reason || '');
+    if (statusRoute) statusRoute.textContent = t;
+  } else if (isSearch) {
+    tag.textContent = '自动路由';
+    info.textContent = '🌐 联网搜索已启用（将路由到 DeepSeek）';
+    if (statusRoute) statusRoute.textContent = '路由: 自动路由 + 联网';
+  }
+}
+
+// 联网搜索 & 深度创作互斥
+document.getElementById('search-toggle').addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('research-toggle').checked = false;
+  }
+  updateRouteInfo();
+});
+document.getElementById('research-toggle').addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('search-toggle').checked = false;
+  }
+  updateRouteInfo();
+});
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
+});
+
+// ========== Image Generation ==========
+let imageHistory = [];
+let currentPreview = null;
+
+const IMG_SIZE_TABLE = {
+  '1K': {'1:1':[1024,1024], '3:4':[864,1152], '4:3':[1152,864], '16:9':[1312,736], '9:16':[736,1312], '2:3':[832,1248], '3:2':[1248,832], '21:9':[1568,672]},
+  '2K': {'1:1':[2048,2048], '3:4':[1728,2304], '4:3':[2304,1728], '16:9':[2624,1472], '9:16':[1472,2624], '2:3':[1664,2496], '3:2':[2496,1664], '21:9':[3136,1344]},
+  '3K': {'1:1':[3072,3072], '3:4':[2592,3456], '4:3':[3456,2592], '16:9':[3936,2208], '9:16':[2208,3936], '2:3':[2496,3744], '3:2':[3744,2496], '21:9':[4704,2016]},
+  '4K': {'1:1':[4096,4096], '3:4':[3456,4608], '4:3':[4608,3456], '16:9':[5248,2944], '9:16':[2944,5248], '2:3':[3328,4992], '3:2':[4992,3328], '21:9':[6272,2688]},
+};
+
+function updateImagePreset() {
+  const size = document.getElementById('img-size').value;
+  const ratio = document.getElementById('img-ratio').value;
+  const [w, h] = IMG_SIZE_TABLE[size][ratio];
+  document.getElementById('img-size-preview').textContent = `输出: ${w} × ${h}`;
+}
+
+function switchDocsTab(tab) {
+  // Find all model-body divs and hide them, then show the target
+  document.querySelectorAll('.docs-model-body').forEach(el => {
+    el.style.display = el.id === 'docs-' + tab ? 'block' : 'none';
+  });
+  // Update tab button active states within each model section
+  document.querySelectorAll('.docs-tabs .docs-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  // The onclick handler already sets active on the clicked button, but let's be safe
+  const clickedBtn = event?.target;
+  if (clickedBtn && clickedBtn.classList.contains('docs-tab')) {
+    clickedBtn.classList.add('active');
+  }
+}
+
+function toggleDocsModel(contentId, btn) {
+  const content = document.getElementById(contentId);
+  if (!content) return;
+  const isOpen = content.classList.toggle('show');
+  btn.classList.toggle('expanded', isOpen);
+}
+
+async function generateImage() {
+  const prompt = document.getElementById('img-prompt').value.trim();
+  if (!prompt) return;
+
+  const btn = document.getElementById('btn-generate');
+  const size = document.getElementById('img-size').value;
+  const ratio = document.getElementById('img-ratio').value;
+  const n = parseInt(document.getElementById('img-n').value);
+  const negativePrompt = document.getElementById('img-negative-prompt').value.trim() || null;
+  const returnBase64 = document.getElementById('img-return-base64').checked;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 生成中...';
+
+  const reqBody = { prompt, size, ratio, n, model: currentImageModel };
+  if (returnBase64) reqBody.return_base64 = true;
+  if (negativePrompt) reqBody.negative_prompt = negativePrompt;
+  if (imgRefImages.length > 0) reqBody.reference_images = [...imgRefImages];
+
+  try {
+    const resp = await fetch(API + '/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await resp.json();
+
+    (data.data || []).forEach((img, i) => {
+      const entry = { url: img.url, prompt, size, time: new Date().toLocaleTimeString() };
+      imageHistory.unshift(entry);
+      showInGallery(entry);
+      addToHistory(entry);
+    });
+  } catch (e) {
+    showToast('❌ 生成失败: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🚀 生成图片';
+}
+
+function showInGallery(entry) {
+  currentPreview = entry;
+  const gallery = document.getElementById('img-gallery');
+  const emptyEl = gallery.querySelector('.gallery-empty');
+  if (emptyEl) emptyEl.remove();
+
+  gallery.innerHTML = `
+    <img class="gallery-image" src="${entry.url}" alt="Generated" loading="lazy" onclick="openZoom('${entry.url.replace(/'/g, "\\'")}')">
+    <div class="gallery-info">${escapeHtml(entry.prompt)} · ${entry.size} · ${entry.time}</div>
+    <div class="gallery-actions">
+      <button class="btn-save" onclick="saveImage('${entry.url}')">💾 保存到 output 文件夹</button>
+      <button class="btn-open" onclick="window.open('${entry.url}','_blank')">🔗 打开原图</button>
+    </div>
+  `;
+}
+
+// ========== Image Zoom ==========
+let zoomScale = 1;
+let zoomImg = null;
+let zoomContainer = null;
+
+function openZoom(url) {
+  zoomScale = 1;
+  // Remove old overlay if any
+  const old = document.getElementById('zoom-overlay');
+  if (old) old.remove();
+
+  zoomContainer = document.createElement('div');
+  zoomContainer.id = 'zoom-overlay';
+  zoomContainer.className = 'zoom-overlay';
+  zoomContainer.innerHTML = `<img id="zoom-img" src="${url}" alt="Zoomed">
+    <div class="zoom-hint">滚轮缩放 · 点击 / ESC 关闭</div>`;
+  document.body.appendChild(zoomContainer);
+  zoomImg = document.getElementById('zoom-img');
+  zoomContainer.classList.add('show');
+  zoomImg.style.transform = 'scale(1)';
+
+  // Click overlay background to close
+  zoomContainer.addEventListener('click', (e) => {
+    if (e.target === zoomContainer || e.target === zoomImg) closeZoom();
+  });
+  // Scroll to zoom
+  zoomContainer.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    zoomScale = Math.max(0.3, Math.min(8, zoomScale + delta));
+    zoomImg.style.transform = `scale(${zoomScale})`;
+  }, { passive: false });
+}
+
+function closeZoom() {
+  if (zoomContainer) {
+    zoomContainer.classList.remove('show');
+    setTimeout(() => zoomContainer?.remove(), 200);
+  }
+  zoomImg = null;
+  zoomContainer = null;
+  zoomScale = 1;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeZoom();
+});
+
+function addToHistory(entry) {
+  document.getElementById('history-label').style.display = 'block';
+  const container = document.getElementById('img-result');
+  const div = document.createElement('div');
+  div.className = 'img-mini';
+  div.onclick = () => showInGallery(entry);
+  div.innerHTML = `
+    <img src="${entry.url}" alt="thumb">
+    <div class="mini-info">
+      <div class="prompt-preview">${escapeHtml(entry.prompt)}</div>
+      <div>${entry.size} · ${entry.time}</div>
+    </div>
+  `;
+  container.prepend(div);
+}
+
+async function saveImage(url) {
+  const btn = document.querySelector('.btn-save');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ 下载中...';
+
+  try {
+    const resp = await fetch(API + '/v1/images/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('✅ 已保存到: ' + data.path);
+    } else {
+      showToast('❌ 保存失败');
+    }
+  } catch (e) {
+    showToast('❌ 保存失败: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = origText;
+}
+
+// ========== Video Generation ==========
+let videoHistory = [];
+let currentVideoPreview = null;
+let videoPollTimer = null;
+
+const VIDEO_RES_PRESETS = {
+  '16:9': { '480p': [854,480], '720p': [1280,720], '1080p': [1920,1080] },
+  '9:16': { '480p': [480,854], '720p': [720,1280], '1080p': [1080,1920] },
+  '1:1':  { '480p': [480,480], '720p': [720,720],   '1080p': [1080,1080] },
+  '4:3':  { '480p': [640,480], '720p': [960,720],   '1080p': [1440,1080] },
+  '3:4':  { '480p': [480,640], '720p': [720,960],   '1080p': [1080,1440] },
+};
+
+function nearest8nPlus1(target) {
+  const n = Math.round((target - 1) / 8);
+  return Math.min(8 * n + 1, 441);
+}
+
+function updateVideoPreset() {
+  const aspect = document.getElementById('video-aspect').value;
+  const quality = document.getElementById('video-quality').value;
+  const duration = parseInt(document.getElementById('video-duration').value);
+  const fps = parseInt(document.getElementById('video-fps').value);
+
+  const [width, height] = VIDEO_RES_PRESETS[aspect][quality];
+  const targetFrames = duration * fps;
+  const numFrames = nearest8nPlus1(targetFrames);
+  const actualDuration = (numFrames / fps).toFixed(1);
+
+  document.getElementById('video-calc-info').textContent =
+    `实际参数: ${width}×${height} · ${numFrames} 帧 · ~${actualDuration} 秒`;
+}
+
+async function generateVideo() {
+  const prompt = document.getElementById('video-prompt').value.trim();
+  if (!prompt) return;
+
+  const btn = document.getElementById('btn-video-generate');
+  const negativePrompt = document.getElementById('video-negative-prompt').value.trim() || null;
+
+  const aspect = document.getElementById('video-aspect').value;
+  const quality = document.getElementById('video-quality').value;
+  const duration = parseInt(document.getElementById('video-duration').value);
+  const fps = parseInt(document.getElementById('video-fps').value);
+  const seedStr = document.getElementById('video-seed').value.trim();
+  const stepsStr = document.getElementById('video-steps').value.trim();
+
+  const [width, height] = VIDEO_RES_PRESETS[aspect][quality];
+  const numFrames = nearest8nPlus1(duration * fps);
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 提交中...';
+
+  const progressEl = document.getElementById('video-progress');
+  progressEl.style.display = 'block';
+  document.getElementById('video-progress-text').textContent = '正在提交视频生成任务...';
+  document.getElementById('video-progress-status').textContent = '';
+
+  const reqBody = {
+    prompt,
+    model: currentVideoModel,
+    width, height,
+    num_frames: numFrames,
+    frame_rate: fps,
+  };
+  if (seedStr) reqBody.seed = parseInt(seedStr);
+  if (stepsStr) reqBody.num_inference_steps = parseInt(stepsStr);
+  if (negativePrompt) reqBody.negative_prompt = negativePrompt;
+  if (videoRefImages.length > 0) reqBody.reference_images = [...videoRefImages];
+
+  try {
+    const resp = await fetch(API + '/v1/video/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || data.error) {
+      const errMsg = data.error?.message || `HTTP ${resp.status}: ${resp.statusText}`;
+      showToast('❌ ' + errMsg);
+      console.error('Video generation error:', data);
+      progressEl.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '🎬 生成视频';
+      return;
+    }
+
+    const taskId = data.task_id;
+    if (!taskId) {
+      const raw = data.raw || data;
+      const videoUrl = extractVideoUrl(raw);
+      if (videoUrl) {
+        progressEl.style.display = 'none';
+        showVideoResult(videoUrl, prompt);
+        btn.disabled = false;
+        btn.textContent = '🎬 生成视频';
+        return;
+      }
+      showToast('❌ 无法获取任务 ID，请查看控制台');
+      progressEl.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '🎬 生成视频';
+      return;
+    }
+
+    document.getElementById('video-progress-text').textContent = '视频生成中，请耐心等待（通常 1-5 分钟）...';
+    document.getElementById('video-progress-status').textContent = '任务 ID: ' + taskId;
+
+    const POLL_INTERVAL = 15000;
+    const MAX_POLLS = 40;
+    let pollCount = 0;
+
+    videoPollTimer = setInterval(async () => {
+      pollCount++;
+      try {
+        const statusResp = await fetch(API + '/v1/video/status/' + taskId);
+        const statusData = await statusResp.json();
+
+        if (!statusResp.ok || statusData.error) {
+          if (statusResp.status === 429) {
+            document.getElementById('video-progress-status').textContent =
+              `任务 ID: ${taskId} · 状态: 限流等待中... · 已等待 ${pollCount * 15} 秒`;
+            return;
+          }
+          clearInterval(videoPollTimer);
+          progressEl.style.display = 'none';
+          showToast('❌ 查询状态失败: ' + statusData.error.message);
+          btn.disabled = false;
+          btn.textContent = '🎬 生成视频';
+          return;
+        }
+
+        const raw = statusData.raw || statusData;
+        const status = extractVideoStatus(raw);
+        document.getElementById('video-progress-status').textContent =
+          `任务 ID: ${taskId} · 状态: ${status} · 已等待 ${pollCount * 15} 秒`;
+
+        if (status === 'completed' || status === 'done' || status === 'ready' || status === 'succeeded') {
+          clearInterval(videoPollTimer);
+          const videoUrl = extractVideoUrl(raw);
+          if (videoUrl) {
+            progressEl.style.display = 'none';
+            showVideoResult(videoUrl, prompt);
+          } else {
+            showToast('⚠️ 生成完成但未找到视频链接，响应已打印到控制台');
+            console.log('Video status response:', raw);
+            progressEl.style.display = 'none';
+          }
+          btn.disabled = false;
+          btn.textContent = '🎬 生成视频';
+        } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+          clearInterval(videoPollTimer);
+          progressEl.style.display = 'none';
+          showToast('❌ 视频生成失败: ' + (raw.error || raw.message || status));
+          btn.disabled = false;
+          btn.textContent = '🎬 生成视频';
+        } else if (pollCount >= MAX_POLLS) {
+          clearInterval(videoPollTimer);
+          progressEl.style.display = 'none';
+          showToast('⏰ 轮询超时，请稍后手动检查');
+          btn.disabled = false;
+          btn.textContent = '🎬 生成视频';
+        }
+      } catch (e) {
+        console.warn('Poll error:', e);
+      }
+    }, POLL_INTERVAL);
+
+  } catch (e) {
+    progressEl.style.display = 'none';
+    showToast('❌ 请求失败: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🎬 生成视频';
+  }
+}
+
+function extractVideoUrl(raw) {
+  if (raw.metadata && raw.metadata.url) return raw.metadata.url;
+  return raw.video_url || raw.url || (raw.output && raw.output.url)
+    || (raw.result && raw.result.url) || (raw.data && raw.data[0] && raw.data[0].url)
+    || '';
+}
+
+function extractVideoStatus(raw) {
+  return (raw.status || raw.state || raw.progress_status || 'processing').toLowerCase();
+}
+
+function showVideoResult(videoUrl, prompt) {
+  currentVideoPreview = { url: videoUrl, prompt, time: new Date().toLocaleTimeString() };
+  videoHistory.unshift(currentVideoPreview);
+  showVideoInGallery(currentVideoPreview);
+  addVideoToHistory(currentVideoPreview);
+}
+
+function showVideoInGallery(entry) {
+  const gallery = document.getElementById('video-gallery');
+  const emptyEl = gallery.querySelector('.gallery-empty');
+  if (emptyEl) emptyEl.remove();
+
+  gallery.innerHTML = `
+    <video class="gallery-image" controls autoplay loop style="max-width:100%;max-height:60vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+      <source src="${entry.url}" type="video/mp4">
+      您的浏览器不支持视频播放
+    </video>
+    <div class="gallery-info">${escapeHtml(entry.prompt)} · ${entry.time}</div>
+    <div class="gallery-actions">
+      <button class="btn-save" onclick="saveVideo('${entry.url.replace(/'/g, "\\'")}')">💾 保存到 output 文件夹</button>
+      <button class="btn-open" onclick="window.open('${entry.url.replace(/'/g, "\\'")}','_blank')">🔗 打开视频</button>
+    </div>
+  `;
+}
+
+function addVideoToHistory(entry) {
+  document.getElementById('video-history-label').style.display = 'block';
+  const container = document.getElementById('video-result');
+  const div = document.createElement('div');
+  div.className = 'img-mini';
+  div.onclick = () => showVideoInGallery(entry);
+  div.innerHTML = `
+    <span style="font-size: var(--fs-24);width:52px;text-align:center;flex-shrink:0">🎬</span>
+    <div class="mini-info">
+      <div class="prompt-preview">${escapeHtml(entry.prompt)}</div>
+      <div>${entry.time}</div>
+    </div>
+  `;
+  container.prepend(div);
+}
+
+async function saveVideo(url) {
+  const allBtns = document.querySelectorAll('.btn-save');
+  const btn = allBtns[allBtns.length - 1];
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ 下载中...';
+
+  try {
+    const resp = await fetch(API + '/v1/video/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('✅ 已保存到: ' + data.path);
+    } else {
+      showToast('❌ 保存失败');
+    }
+  } catch (e) {
+    showToast('❌ 保存失败: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = origText;
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.gallery-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'gallery-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ========== Advanced Options ==========
+let imgRefImages = [];
+let videoRefImages = [];
+
+function toggleAdvanced(panelId) {
+  const panel = document.getElementById(panelId);
+  const toggle = panel.previousElementSibling;
+  const isOpen = panel.classList.toggle('show');
+  toggle.classList.toggle('open', isOpen);
+}
+
+function handleRefFiles(input, containerId) {
+  const files = Array.from(input.files);
+  const arr = containerId === 'img-ref-images' ? imgRefImages : videoRefImages;
+  const maxSlots = 4;
+
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    if (arr.length >= maxSlots) { showToast('最多 4 张参考图'); return; }
+
+    resizeAndEncode(file, 1024, 1024, 0.85).then(dataUri => {
+      arr.push(dataUri);
+      addRefThumb(dataUri, arr.length - 1, containerId);
+    });
+  });
+
+  input.value = '';
+}
+
+function resizeAndEncode(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => reject(new Error('图片加载失败'));
+    img.src = url;
+  });
+}
+
+function addRefThumb(dataUri, index, containerId) {
+  const container = document.getElementById(containerId);
+  const addBtn = container.querySelector('.ref-add');
+
+  const slot = document.createElement('div');
+  slot.className = 'ref-slot';
+  slot.innerHTML = `
+    <img src="${dataUri}" alt="Ref ${index + 1}">
+    <button class="remove" title="移除" onclick="removeRefImage(${index}, '${containerId}')">✕</button>
+  `;
+  container.insertBefore(slot, addBtn);
+
+  const arr = containerId === 'img-ref-images' ? imgRefImages : videoRefImages;
+  if (arr.length >= 4) addBtn.style.display = 'none';
+}
+
+function removeRefImage(index, containerId) {
+  const arr = containerId === 'img-ref-images' ? imgRefImages : videoRefImages;
+  arr.splice(index, 1);
+
+  const container = document.getElementById(containerId);
+  const addBtn = container.querySelector('.ref-add');
+  container.querySelectorAll('.ref-slot').forEach(s => s.remove());
+  arr.forEach((uri, i) => addRefThumb(uri, i, containerId));
+  addBtn.style.display = '';
+}
+
+function setupDragDrop(containerId) {
+  const container = document.getElementById(containerId);
+  container.addEventListener('dragover', e => { e.preventDefault(); });
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const dt = new DataTransfer();
+    Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+    handleRefFiles({ files: dt.files }, containerId);
+  });
+}
+
+// ========== Health Check ==========
+async function checkHealth() {
+  try {
+    const resp = await fetch(API + '/health');
+    const data = await resp.json();
+    document.getElementById('st-agnes').textContent = '在线';
+    document.getElementById('st-deepseek').textContent = '在线';
+    document.getElementById('dot-agnes').className = 'dot on';
+    document.getElementById('dot-deepseek').className = 'dot on';
+  } catch {
+    document.getElementById('st-agnes').textContent = '离线';
+    document.getElementById('st-deepseek').textContent = '离线';
+    document.getElementById('dot-agnes').className = 'dot off';
+    document.getElementById('dot-deepseek').className = 'dot off';
+  }
+}
+
+// ========== Utils ==========
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function renderMarkdown(text) {
+  text = text.replace(/^\n+/, '').replace(/\n+$/, '').replace(/\n{3,}/g, '\n\n');
+
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const lines = html.split('\n');
+  const result = [];
+  let inList = false;
+  let listType = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (/^```/.test(line)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; listType = null; }
+      const codeLines = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      result.push('<pre><code>' + codeLines.join('\n') + '</code></pre>');
+      continue;
+    }
+
+    if (/^---\s*$/.test(line)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; listType = null; }
+      result.push('<hr>');
+      continue;
+    }
+
+    const h3 = line.match(/^### (.+)/);
+    if (h3) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; listType = null; }
+      result.push('<h3>' + h3[1] + '</h3>');
+      continue;
+    }
+    const h2 = line.match(/^## (.+)/);
+    if (h2) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; listType = null; }
+      result.push('<h2>' + h2[1] + '</h2>');
+      continue;
+    }
+    const h1 = line.match(/^# (.+)/);
+    if (h1) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; listType = null; }
+      result.push('<h1>' + h1[1] + '</h1>');
+      continue;
+    }
+
+    const ulItem = line.match(/^[\-\*] (.+)/);
+    if (ulItem) {
+      if (!inList || listType !== 'ul') {
+        if (inList) result.push('</' + listType + '>');
+        result.push('<ul>');
+        inList = true;
+        listType = 'ul';
+      }
+      result.push('<li>' + ulItem[1] + '</li>');
+      continue;
+    }
+
+    const olItem = line.match(/^\d+\. (.+)/);
+    if (olItem) {
+      if (!inList || listType !== 'ol') {
+        if (inList) result.push('</' + listType + '>');
+        result.push('<ol>');
+        inList = true;
+        listType = 'ol';
+      }
+      result.push('<li>' + olItem[1] + '</li>');
+      continue;
+    }
+
+    if (inList) {
+      result.push('</' + listType + '>');
+      inList = false;
+      listType = null;
+    }
+
+    if (/^\s*$/.test(line)) {
+      result.push('\n');
+      continue;
+    }
+
+    result.push(line + '\n');
+  }
+
+  if (inList) {
+    result.push('</' + listType + '>');
+  }
+
+  html = result.join('');
+
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  return html;
+}
+
+// ========== Theme Manager ==========
+const ThemeManager = {
+  STORAGE_KEY: 'agnes-theme',
+
+  // 持久化到 localStorage（每次修改主题/滑块时调用）
+  save() {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+        preset: this._state.preset,
+        backgroundImage: this._state.backgroundImage,
+        blur: this._state.blur,
+        brightness: this._state.brightness,
+        surfaceAlpha: this._state.surfaceAlpha,
+        fontSize: this._state.fontSize,
+      }));
+    } catch (e) { /* ignore quota/private-mode errors */ }
+  },
+
+  // 同步到后端 settings.json（跨 WebView2 会话持久化）
+  async saveToServer() {
+    try {
+      await fetch(API + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blur: this._state.blur,
+          brightness: this._state.brightness,
+          surfaceAlpha: this._state.surfaceAlpha,
+          preset: this._state.preset,
+          fontSize: this._state.fontSize,
+        }),
+      });
+    } catch (e) { /* non-critical */ }
+  },
+
+  async load() {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.preset && this.PRESETS[saved.preset]) this._state.preset = saved.preset;
+        if (saved.backgroundImage !== undefined) this._state.backgroundImage = saved.backgroundImage;
+        if (saved.blur !== undefined) this._state.blur = saved.blur;
+        if (saved.brightness !== undefined) this._state.brightness = saved.brightness;
+        if (saved.surfaceAlpha !== undefined) this._state.surfaceAlpha = saved.surfaceAlpha;
+        if (saved.fontSize) this._state.fontSize = saved.fontSize;
+      }
+    } catch (e) { /* ignore corrupt data */ }
+
+    // 优先从后端读取设置（更可靠的持久化方式）
+    try {
+      const resp = await fetch(API + '/api/settings');
+      const data = await resp.json();
+      if (typeof data.blur === 'number') this._state.blur = data.blur;
+      if (typeof data.brightness === 'number') this._state.brightness = data.brightness;
+      if (typeof data.surfaceAlpha === 'number') this._state.surfaceAlpha = data.surfaceAlpha;
+      if (typeof data.preset === 'string' && this.PRESETS[data.preset]) this._state.preset = data.preset;
+      if (typeof data.fontSize === 'string') this._state.fontSize = data.fontSize;
+    } catch (e) { /* no server, use localStorage */ }
+
+    this.applyPreset(this._state.preset);
+    this._applyFontSize(this._state.fontSize);
+
+    // 模糊、亮度、透明度必须在背景解析之前同步设置
+    this.setBlur(this._state.blur);
+    this.setBrightness(this._state.brightness);
+    this.setSurfaceAlpha(this._state.surfaceAlpha);
+    this.renderPresets();
+    this.updateClearBtn();
+
+    // Resolve background: localStorage URL > disk file > default (async, best-effort)
+    let bgUrl = this._state.backgroundImage;
+    if (bgUrl) {
+      if (bgUrl.startsWith('data:')) {
+        try {
+          const resp = await fetch(API + '/api/background', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: bgUrl }),
+          });
+          const data = await resp.json();
+          if (data.url) {
+            bgUrl = data.url;
+            this._state.backgroundImage = bgUrl;
+            this.save();
+          }
+        } catch (e) { /* keep data URI fallback */ }
+      }
+      try {
+        this.applyBackground(bgUrl);
+      } catch (e) { /* DOM may not be ready, CSS vars already set */ }
+    } else {
+      let found = false;
+      try {
+        const resp = await fetch(API + '/api/background');
+        const data = await resp.json();
+        if (data.url) {
+          this._state.backgroundImage = data.url;
+          try {
+            this.applyBackground(data.url);
+          } catch (e) { /* DOM may not be ready */ }
+          found = true;
+        }
+      } catch (e) { /* no saved file */ }
+      if (!found) {
+        try {
+          this.applyBackground('/assets/default-bg.jpg');
+        } catch (e) { /* fallback image missing, non-critical */ }
+      }
+    }
+  },
+
+  PRESETS: {
+    'dark':       { '--bg': '#09090b', '--surface': '#131316', '--surface2': '#1c1c21', '--surface3': '#25252c', '--frame': '#1a1a22', '--frame2': '#23232e', '--frame3': '#2d2d3a', '--border': '#3a3a4a', '--border2': '#5a5a7a', '--text': '#ededed', '--text2': '#9898a4', '--text3': '#5e5e6e', '--accent': '#6366f1', '--accent2': '#818cf8' },
+    'midnight':   { '--bg': '#070b14', '--surface': '#0d1424', '--surface2': '#152035', '--surface3': '#1e2d48', '--frame': '#1a2f55', '--frame2': '#24427e', '--frame3': '#2f5598', '--border': '#253249', '--border2': '#3d5a80', '--text': '#e2e8f0', '--text2': '#8899b4', '--text3': '#4a5568', '--accent': '#38bdf8', '--accent2': '#818cf8' },
+    'forest':     { '--bg': '#060d09', '--surface': '#0b1510', '--surface2': '#111f18', '--surface3': '#1a2f20', '--frame': '#173d2a', '--frame2': '#1f5539', '--frame3': '#2a704c', '--border': '#2a5a3a', '--border2': '#4a8a5a', '--text': '#e2f0e4', '--text2': '#8aaa90', '--text3': '#3d5a45', '--accent': '#34d399', '--accent2': '#a3e635' },
+    'amber':      { '--bg': '#0d0a06', '--surface': '#17120b', '--surface2': '#211a10', '--surface3': '#2e2318', '--frame': '#2e2213', '--frame2': '#3d2e1b', '--frame3': '#523e25', '--border': '#6a4a2a', '--border2': '#9a7040', '--text': '#f5e6d3', '--text2': '#b8a088', '--text3': '#5e4a38', '--accent': '#f59e0b', '--accent2': '#f97316' },
+    'rose':       { '--bg': '#0d0709', '--surface': '#170e12', '--surface2': '#21151a', '--surface3': '#2e1e26', '--frame': '#2f1a26', '--frame2': '#422537', '--frame3': '#573149', '--border': '#6a2a4a', '--border2': '#9a4a70', '--text': '#f5e0e5', '--text2': '#b898a0', '--text3': '#5e3d45', '--accent': '#f472b6', '--accent2': '#e879f9' },
+    'monochrome': { '--bg': '#0a0a0a', '--surface': '#141414', '--surface2': '#1e1e1e', '--surface3': '#282828', '--frame': '#1c1c1c', '--frame2': '#262626', '--frame3': '#323232', '--border': '#4a4a4a', '--border2': '#7a7a7a', '--text': '#e5e5e5', '--text2': '#a3a3a3', '--text3': '#525252', '--accent': '#a3a3a3', '--accent2': '#d4d4d4' },
+  },
+
+  _state: { preset: 'dark', backgroundImage: null, blur: 12, brightness: 35, surfaceAlpha: 100, fontSize: 'medium' },
+
+  applyPreset(name) {
+    const vars = this.PRESETS[name];
+    if (!vars) return;
+    this._state.preset = name;
+    Object.entries(vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+    this._applySurfaceAlpha(this._state.surfaceAlpha || 100);
+    this.renderPresets();
+    this.updateClearBtn();
+    this.save();
+    this.saveToServer();
+  },
+
+  // Apply a background URL (path or data URI) to the wallpaper element
+  applyBackground(url) {
+    let wallpaper = document.querySelector('.bg-wallpaper');
+    let overlay = document.querySelector('.bg-overlay');
+    const mainEl = document.querySelector('.main');
+    if (!wallpaper) {
+      wallpaper = document.createElement('div');
+      wallpaper.className = 'bg-wallpaper';
+      (mainEl || document.body).prepend(wallpaper);
+    }
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'bg-overlay';
+      (mainEl || document.body).prepend(overlay);
+    }
+    wallpaper.style.backgroundImage = `url(${url})`;
+
+    const preview = document.getElementById('bg-preview');
+    const text = document.getElementById('bg-upload-text');
+    const zone = document.getElementById('bg-upload-zone');
+    if (preview) { preview.style.display = 'block'; preview.style.backgroundImage = `url(${url})`; }
+    if (text) text.textContent = '点击更换背景图片';
+    if (zone) zone.classList.add('has-bg');
+    this.updateClearBtn();
+  },
+
+  async setBackground(dataUri, silent) {
+    // Apply immediately for instant feedback
+    this._state.backgroundImage = dataUri;
+    this.applyBackground(dataUri);
+    if (!silent) this.save();
+
+    // Persist to backend in background
+    try {
+      const resp = await fetch(API + '/api/background', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUri }),
+      });
+      const data = await resp.json();
+      if (data.url && this._state.backgroundImage === dataUri) {
+        this._state.backgroundImage = data.url;
+        if (!silent) this.save();
+      }
+    } catch (e) { /* data URI fallback is fine */ }
+  },
+
+  async clearBackground() {
+    this._state.backgroundImage = null;
+    // Delete file on disk
+    try { await fetch(API + '/api/background', { method: 'DELETE' }); } catch (e) {}
+    // Remove wallpaper elements
+    const wallpaper = document.querySelector('.bg-wallpaper');
+    const overlay = document.querySelector('.bg-overlay');
+    if (wallpaper) wallpaper.remove();
+    if (overlay) overlay.remove();
+    const preview = document.getElementById('bg-preview');
+    const text = document.getElementById('bg-upload-text');
+    const zone = document.getElementById('bg-upload-zone');
+    if (preview) { preview.style.display = 'none'; preview.style.backgroundImage = ''; }
+    if (text) text.textContent = '📁 点击上传背景图片（或拖拽到此处）';
+    if (zone) zone.classList.remove('has-bg');
+    this.updateClearBtn();
+    this.save();
+  },
+
+  setBlur(value) {
+    const px = Math.min(30, Math.max(0, parseInt(value) || 0));
+    this._state.blur = px;
+    document.documentElement.style.setProperty('--bg-blur', px + 'px');
+    const slider = document.getElementById('blur-slider');
+    const val = document.getElementById('blur-val');
+    if (slider && parseInt(slider.value) !== px) slider.value = px;
+    if (val) val.textContent = px + 'px';
+    this.save();
+    this.saveToServer();
+  },
+
+  setBrightness(value) {
+    const pct = Math.min(100, Math.max(10, parseInt(value) || 35));
+    this._state.brightness = pct;
+    document.documentElement.style.setProperty('--bg-brightness', (pct / 100).toFixed(2));
+    // 根据背景亮度动态调整 splash 文字可见性：背景越暗，文字越清晰
+    const textOpacity = Math.max(0.3, Math.min(1, 0.3 + (pct / 100) * 0.7));
+    const text2Opacity = Math.max(0.2, Math.min(0.9, textOpacity - 0.15));
+    const text3Opacity = Math.max(0.1, Math.min(0.5, textOpacity - 0.3));
+    document.documentElement.style.setProperty('--splash-text', `rgba(255,255,255,${textOpacity.toFixed(2)})`);
+    document.documentElement.style.setProperty('--splash-text2', `rgba(255,255,255,${text2Opacity.toFixed(2)})`);
+    document.documentElement.style.setProperty('--splash-text3', `rgba(255,255,255,${text3Opacity.toFixed(2)})`);
+    const slider = document.getElementById('brightness-slider');
+    const val = document.getElementById('brightness-val');
+    if (slider && parseInt(slider.value) !== pct) slider.value = pct;
+    if (val) val.textContent = pct + '%';
+    this.save();
+    this.saveToServer();
+  },
+
+  // 控制主题面片的透明度（0=完全透明看到背景，100=完全不透明）
+  setSurfaceAlpha(value) {
+    const pct = Math.min(100, Math.max(0, parseInt(value) || 100));
+    this._state.surfaceAlpha = pct;
+    this._applySurfaceAlpha(pct);
+    const slider = document.getElementById('surface-alpha-slider');
+    const val = document.getElementById('surface-alpha-val');
+    if (slider && parseInt(slider.value) !== pct) slider.value = pct;
+    if (val) val.textContent = pct + '%';
+    this.save();
+    this.saveToServer();
+  },
+
+  // 根据当前 surfaceAlpha 重新计算 frame/frame2/frame3 的 rgba 值
+  _applySurfaceAlpha(pct) {
+    const alpha = (pct / 100).toFixed(2);
+    const hexToRgba = (hex) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    };
+    // 从当前已设置的 CSS 变量读取原始 hex 值
+    const root = document.documentElement;
+    const frame = root.style.getPropertyValue('--frame').trim() || '#1a1a22';
+    const frame2 = root.style.getPropertyValue('--frame2').trim() || '#23232e';
+    const frame3 = root.style.getPropertyValue('--frame3').trim() || '#2d2d3a';
+    root.style.setProperty('--frame-a', hexToRgba(frame));
+    root.style.setProperty('--frame2-a', hexToRgba(frame2));
+    root.style.setProperty('--frame3-a', hexToRgba(frame3));
+  },
+
+  setFontSize(size) {
+    if (!['small', 'medium', 'large'].includes(size)) return;
+    this._state.fontSize = size;
+    this._applyFontSize(size);
+    this.save();
+    this.saveToServer();
+  },
+
+  _applyFontSize(size) {
+    const html = document.documentElement;
+    html.classList.remove('font-md', 'font-lg');
+    if (size === 'medium') html.classList.add('font-md');
+    if (size === 'large')  html.classList.add('font-lg');
+    // Update button active states
+    document.querySelectorAll('.font-size-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.size === size);
+    });
+  },
+
+  updateClearBtn() {
+    const btn = document.getElementById('clear-bg-btn');
+    if (!btn) return;
+    btn.style.display = this._state.backgroundImage ? 'block' : 'none';
+  },
+
+  async reset() {
+    await this.clearBackground();
+    // Restore default background
+    this.applyBackground('/assets/default-bg.jpg');
+    this._state.backgroundImage = null;
+    this._state.blur = 12;
+    this._state.brightness = 35;
+    this._state.surfaceAlpha = 100;
+    this._state.fontSize = 'medium';
+    this.setBlur(12);
+    this.setBrightness(35);
+    this.setSurfaceAlpha(100);
+    this.setFontSize('medium');
+    this.applyPreset('dark');
+    this.save();
+  },
+
+  // 将当前所有设置保存到后端（user-data/settings.json）
+  async saveAllAndNotify() {
+    await this.saveAll();
+    showToast('✅ 设置已保存到本地');
+  },
+
+  async saveAll() {
+    try {
+      await fetch(API + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blur: this._state.blur,
+          brightness: this._state.brightness,
+          surfaceAlpha: this._state.surfaceAlpha,
+          preset: this._state.preset,
+          fontSize: this._state.fontSize,
+        }),
+      });
+    } catch (e) { /* non-critical */ }
+  },
+
+  renderPresets() {
+    const grid = document.getElementById('preset-grid');
+    if (!grid) return;
+    const colors = {
+      dark:       ['#09090b', '#6366f1'],
+      midnight:   ['#070b14', '#38bdf8'],
+      forest:     ['#060d09', '#34d399'],
+      amber:      ['#0d0a06', '#f59e0b'],
+      rose:       ['#0d0709', '#f472b6'],
+      monochrome: ['#0a0a0a', '#a3a3a3'],
+    };
+    const labels = { dark: '暗夜', midnight: '午夜蓝', forest: '森林', amber: '琥珀', rose: '玫瑰', monochrome: '黑白' };
+    grid.innerHTML = Object.entries(colors).map(([name, [bg, ac]]) => `
+      <div class="preset-btn-wrap" onclick="ThemeManager.applyPreset('${name}')">
+        <div class="preset-btn${this._state.preset === name ? ' active' : ''}" style="background:${bg};">
+          <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:60%;height:3px;border-radius:2px;background:${ac};"></div>
+        </div>
+        <div class="preset-name">${labels[name]}</div>
+      </div>
+    `).join('');
+  },
+};
+
+// Settings page upload handlers
+function initSettingsUpload() {
+  const zone = document.getElementById('bg-upload-zone');
+  const input = document.getElementById('bg-file-input');
+  if (!zone || !input) return;
+
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--accent)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) processBgFile(file);
+  });
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (file) processBgFile(file);
+    input.value = '';
+  });
+}
+
+function processBgFile(file) {
+  showCropModal(file);
+}
+
+// ========== Background Crop ==========
+let cropState = null;
+let cropFile = null;
+let cropOriginalDataUri = null;
+
+function showCropModal(file) {
+  cropFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    cropOriginalDataUri = e.target.result;
+    const img = document.getElementById('crop-image');
+    img.onload = function() { initCropBox(); };
+    img.src = cropOriginalDataUri;
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('crop-modal').style.display = 'flex';
+}
+
+function initCropBox() {
+  const container = document.getElementById('crop-container');
+  const img = document.getElementById('crop-image');
+  const box = document.getElementById('crop-box');
+
+  img.style.display = 'block';
+
+  const imgRect = img.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
+  const imgX = imgRect.left - containerRect.left;
+  const imgY = imgRect.top - containerRect.top;
+  const imgW = imgRect.width;
+  const imgH = imgRect.height;
+
+  // Lock crop box to viewport aspect ratio
+  const cropRatio = window.innerWidth / window.innerHeight;
+
+  // Largest box that fits within image at this ratio, centered
+  let boxW, boxH;
+  if (imgW / cropRatio >= imgH) {
+    boxH = imgH;
+    boxW = Math.round(imgH * cropRatio);
+  } else {
+    boxW = imgW;
+    boxH = Math.round(imgW / cropRatio);
+  }
+  const boxX = imgX + Math.round((imgW - boxW) / 2);
+  const boxY = imgY + Math.round((imgH - boxH) / 2);
+
+  cropState = {
+    imgNaturalW: img.naturalWidth,
+    imgNaturalH: img.naturalHeight,
+    imgX, imgY, imgW, imgH,
+    boxX, boxY, boxW, boxH,
+    cropRatio: cropRatio,
+    dragging: false, resizing: false,
+    startX: 0, startY: 0,
+    origBoxX: 0, origBoxY: 0, origBoxW: 0, origBoxH: 0,
+  };
+
+  updateBoxDisplay();
+  box.style.display = 'block';
+}
+
+function updateBoxDisplay() {
+  const box = document.getElementById('crop-box');
+  if (!box) return;
+  box.style.left = cropState.boxX + 'px';
+  box.style.top = cropState.boxY + 'px';
+  box.style.width = cropState.boxW + 'px';
+  box.style.height = cropState.boxH + 'px';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('crop-container');
+  if (!container) return;
+
+  container.addEventListener('mousedown', function(e) {
+    if (!cropState) return;
+    const target = e.target;
+    const dir = target.dataset ? target.dataset.dir : null;
+
+    if (dir) {
+      cropState.resizing = true;
+      cropState.resizeDir = dir;
+    } else if (target.id === 'crop-box' || target.closest('#crop-box')) {
+      cropState.dragging = true;
+    } else {
+      return;
+    }
+
+    cropState.startX = e.clientX;
+    cropState.startY = e.clientY;
+    cropState.origBoxX = cropState.boxX;
+    cropState.origBoxY = cropState.boxY;
+    cropState.origBoxW = cropState.boxW;
+    cropState.origBoxH = cropState.boxH;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!cropState || (!cropState.dragging && !cropState.resizing)) return;
+
+    const dx = e.clientX - cropState.startX;
+    const dy = e.clientY - cropState.startY;
+
+    if (cropState.dragging) {
+      let newX = cropState.origBoxX + dx;
+      let newY = cropState.origBoxY + dy;
+      newX = Math.max(cropState.imgX, Math.min(cropState.imgX + cropState.imgW - cropState.boxW, newX));
+      newY = Math.max(cropState.imgY, Math.min(cropState.imgY + cropState.imgH - cropState.boxH, newY));
+      cropState.boxX = newX;
+      cropState.boxY = newY;
+    } else if (cropState.resizing) {
+      const dir = cropState.resizeDir;
+      const ratio = cropState.cropRatio;
+      const MIN_SIZE = 100;
+
+      // Anchor = opposite corner of resize direction
+      let anchorX, anchorY;
+      if (dir.includes('e')) anchorX = cropState.origBoxX;
+      else anchorX = cropState.origBoxX + cropState.origBoxW;
+      if (dir.includes('s')) anchorY = cropState.origBoxY;
+      else anchorY = cropState.origBoxY + cropState.origBoxH;
+
+      // Mouse relative to anchor
+      const mx = cropState.origBoxX + ((dir.includes('e')) ? cropState.origBoxW : 0) + dx;
+      const my = cropState.origBoxY + ((dir.includes('s')) ? cropState.origBoxH : 0) + dy;
+
+      const maxW = Math.abs(mx - anchorX);
+      const maxH = Math.abs(my - anchorY);
+
+      let newW, newH;
+      if (maxW / ratio >= maxH) {
+        newH = Math.max(MIN_SIZE, maxH);
+        newW = Math.round(newH * ratio);
+      } else {
+        newW = Math.max(MIN_SIZE, maxW);
+        newH = Math.round(newW / ratio);
+      }
+
+      let newX, newY;
+      if (dir.includes('w')) newX = anchorX - newW;
+      else newX = anchorX;
+      if (dir.includes('n')) newY = anchorY - newH;
+      else newY = anchorY;
+
+      // Clamp to image bounds
+      if (newX < cropState.imgX) { newW -= (cropState.imgX - newX); newX = cropState.imgX; newH = Math.round(newW / ratio); }
+      if (newY < cropState.imgY) { newH -= (cropState.imgY - newY); newY = cropState.imgY; newW = Math.round(newH * ratio); }
+      if (newX + newW > cropState.imgX + cropState.imgW) {
+        newW = cropState.imgX + cropState.imgW - newX;
+        newH = Math.round(newW / ratio);
+      }
+      if (newY + newH > cropState.imgY + cropState.imgH) {
+        newH = cropState.imgY + cropState.imgH - newY;
+        newW = Math.round(newH * ratio);
+      }
+      if (newW < MIN_SIZE) { newW = MIN_SIZE; newH = Math.round(newW / ratio); }
+      if (newH < MIN_SIZE) { newH = MIN_SIZE; newW = Math.round(newH * ratio); }
+
+      cropState.boxX = newX;
+      cropState.boxY = newY;
+      cropState.boxW = newW;
+      cropState.boxH = newH;
+    }
+
+    updateBoxDisplay();
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!cropState) return;
+    cropState.dragging = false;
+    cropState.resizing = false;
+  });
+});
+
+function confirmCrop() {
+  if (!cropState || !cropFile) return;
+
+  const scaleX = cropState.imgNaturalW / cropState.imgW;
+  const scaleY = cropState.imgNaturalH / cropState.imgH;
+
+  const sx = Math.round((cropState.boxX - cropState.imgX) * scaleX);
+  const sy = Math.round((cropState.boxY - cropState.imgY) * scaleY);
+  const sw = Math.round(cropState.boxW * scaleX);
+  const sh = Math.round(cropState.boxH * scaleY);
+
+  const img = document.getElementById('crop-image');
+  const canvas = document.createElement('canvas');
+  canvas.width = sw;
+  canvas.height = sh;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  const dataUri = canvas.toDataURL('image/jpeg', 0.85);
+  ThemeManager.setBackground(dataUri);
+  closeCropModal();
+}
+
+function skipCrop() {
+  if (!cropFile) return;
+  resizeAndEncode(cropFile, 1920, 1080, 0.75).then(dataUri => {
+    ThemeManager.setBackground(dataUri);
+  }).catch(() => {
+    showToast('图片处理失败，请重试');
+  });
+  closeCropModal();
+}
+
+function cancelCrop() {
+  closeCropModal();
+}
+
+function closeCropModal() {
+  const modal = document.getElementById('crop-modal');
+  const img = document.getElementById('crop-image');
+  const box = document.getElementById('crop-box');
+  if (modal) modal.style.display = 'none';
+  if (img) { img.style.display = 'none'; img.src = ''; }
+  if (box) box.style.display = 'none';
+  cropState = null;
+  cropFile = null;
+  cropOriginalDataUri = null;
+}
+
+// ========== API Key Management ==========
+async function loadApiKeyConfig() {
+  try {
+    const resp = await fetch(API + '/api/config');
+    const data = await resp.json();
+
+    document.getElementById('agnes-api-key').value = data.agnes.api_key || '';
+    document.getElementById('agnes-base-url').value = data.agnes.base_url || '';
+    document.getElementById('deepseek-api-key').value = data.deepseek.api_key || '';
+    document.getElementById('deepseek-base-url').value = data.deepseek.base_url || '';
+    document.getElementById('agnes-proxy').value = data.agnes.proxy || '';
+    document.getElementById('deepseek-proxy').value = data.deepseek.proxy || '';
+  } catch (e) {
+    console.error('加载配置失败:', e);
+  }
+}
+
+function toggleKeyVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const btn = input.parentElement.querySelector('button');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈 隐藏';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️ 显示';
+  }
+}
+
+async function saveApiKey() {
+  const btn = event.target;
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ 保存中...';
+
+  const config = {
+    agnes_api_key: document.getElementById('agnes-api-key').value.trim(),
+    agnes_base_url: document.getElementById('agnes-base-url').value.trim(),
+    deepseek_api_key: document.getElementById('deepseek-api-key').value.trim(),
+    deepseek_base_url: document.getElementById('deepseek-base-url').value.trim(),
+    agnes_proxy: document.getElementById('agnes-proxy').value.trim(),
+    deepseek_proxy: document.getElementById('deepseek-proxy').value.trim(),
+  };
+
+  try {
+    const resp = await fetch(API + '/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      showToast('✅ 配置已保存，立即生效');
+      await loadApiKeyConfig();
+      checkHealth();
+    } else {
+      showToast('❌ 保存失败: ' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    showToast('❌ 保存失败: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = origText;
+}
+
+// Init
+function startApp() {
+  ThemeManager.load();
+  initSettingsUpload();
+  setupDragDrop('img-ref-images');
+  setupDragDrop('video-ref-images');
+  updateImagePreset();
+  updateVideoPreset();
+  checkHealth();
+  loadApiKeyConfig();
+
+  // Restore saved model selections
+  (function restoreModelSelection() {
+    const imgModel = localStorage.getItem('currentImageModel');
+    const vidModel = localStorage.getItem('currentVideoModel');
+    if (imgModel) {
+      currentImageModel = imgModel;
+      document.querySelectorAll('#image-models .nav-sub-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.model === imgModel);
+      });
+      const label = document.getElementById('img-model-label');
+      if (label) label.textContent = MODEL_NAMES[imgModel] || imgModel;
+    }
+    if (vidModel) {
+      currentVideoModel = vidModel;
+      document.querySelectorAll('#video-models .nav-sub-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.model === vidModel);
+      });
+      const label = document.getElementById('video-model-label');
+      if (label) label.textContent = MODEL_NAMES[vidModel] || vidModel;
+    }
+  })();
+
+  setInterval(checkHealth, 30000);
+  chatInput.focus();
+}
+
+initAPI();
+</script>
+</body>
+</html>
