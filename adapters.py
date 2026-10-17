@@ -200,6 +200,13 @@ class AgnesAdapter(BaseAdapter):
 
     def __init__(self):
         super().__init__(cfg.agnes)
+        # 复用常驻的裸 AsyncClient（带连接池 + keep-alive），
+        # 图片/视频每次请求不再新建 TCP/TLS 连接，省几百毫秒握手开销。
+        self._raw_http = _build_async_http_client(proxy=self.cfg.proxy, timeout=120)
+
+    def _get_raw_http(self) -> httpx.AsyncClient:
+        """返回共享的裸 HTTP 客户端（已建连接池，多次请求复用）。"""
+        return self._raw_http
 
     async def _chat_impl(
         self, messages, model, temperature, max_tokens, enable_search=False,
@@ -267,21 +274,21 @@ class AgnesAdapter(BaseAdapter):
                 "response_format": "url",
             }
 
-        async with _build_async_http_client(proxy=self.cfg.proxy, timeout=120) as client:
-            resp = await client.post(
-                f"{self.cfg.base_url}/images/generations",
-                json=body,
-                headers={
-                    "Authorization": f"Bearer {self.cfg.api_key}",
-                    "Content-Type": "application/json",
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return [
-                img.get("url") or img.get("b64_json") or ""
-                for img in data.get("data", [])
-            ]
+        client = self._get_raw_http()
+        resp = await client.post(
+            f"{self.cfg.base_url}/images/generations",
+            json=body,
+            headers={
+                "Authorization": f"Bearer {self.cfg.api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return [
+            img.get("url") or img.get("b64_json") or ""
+            for img in data.get("data", [])
+        ]
 
     # ---- 视频生成 ----
 
@@ -290,104 +297,139 @@ class AgnesAdapter(BaseAdapter):
         negative_prompt: str | None = None,
         reference_images: list[str] | None = None,
         mode: str | None = None,
-        width: int | None = None,
-        height: int | None = None,
-        num_frames: int | None = None,
-        frame_rate: int | None = None,
-        num_inference_steps: int | None = None,
+        seconds: str | int | None = None,
+        aspect_ratio: str | None = None,
         seed: int | None = None,
     ) -> dict[str, Any]:
-        """视频生成（完整参数支持）。
+        """视频生成（Agnes Video 2.5 Flash，免费）。
+
+        新版 API 契约（与旧版 v2.0 完全不同）：
+          - 必传 `mode`：text（文生视频）/ keyframe（首尾帧）/ reference（多参考）
+          - `seconds`：时长 4-12 秒，默认 5
+          - `aspect_ratio`：画幅，如 "16:9" / "9:16"
+          - keyframe 模式用 first_frame / last_frame 传首尾帧
+          - reference 模式用 images（纯 Base64 或 URL，最多 5 张）
+          - 注意：width / height / num_frames / frame_rate 是禁止字段，不能传
 
         视频 API 限流严格（1次/分钟），带自动重试。
         """
         model = model or self.cfg.video_model
 
-        body: dict[str, Any] = {"model": model, "prompt": prompt}
+        # 根据是否带参考图，自动推断 mode
+        if not mode:
+            mode = "reference" if reference_images else "text"
+        if reference_images and mode == "text":
+            mode = "reference"
+        if reference_images and mode == "keyframe" and len(reference_images) >= 2:
+            mode = "reference"  # 多张只能走 reference
 
+        # 反向提示词 → 拼进 prompt（Flash 无 negative_prompt 参数）
         if negative_prompt:
-            body["negative_prompt"] = negative_prompt
-        if width:
-            body["width"] = width
-        if height:
-            body["height"] = height
-        if num_frames:
-            body["num_frames"] = num_frames
-        if frame_rate:
-            body["frame_rate"] = frame_rate
-        if num_inference_steps:
-            body["num_inference_steps"] = num_inference_steps
+            prompt = f"{prompt}. IMPORTANT: Do NOT include any of the following: {negative_prompt}"
+
+        body: dict[str, Any] = {
+            "model": model,
+            "prompt": prompt,
+            "mode": mode,
+        }
+
+        # 时长（4-12 秒，默认 5）
+        body["seconds"] = str(seconds or "5")
+
+        # 画幅
+        if aspect_ratio:
+            body["aspect_ratio"] = aspect_ratio
+
         if seed is not None:
             body["seed"] = seed
 
+        # 参考图（纯 Base64，不带 data URI 前缀）
         if reference_images:
-            # 去掉 data URI 前缀，Agnes 视频 API 只接受纯 Base64
-            images = [_to_raw_base64(img) for img in reference_images]
-            if len(images) == 1:
-                # 单张参考图
-                body["image"] = images[0]
-                if mode:
-                    body["mode"] = mode
+            raw = [_to_raw_base64(img) for img in reference_images][:5]
+            if mode == "keyframe":
+                body["first_frame"] = raw[0]
+                if len(raw) >= 2:
+                    body["last_frame"] = raw[1]
             else:
-                # 多张参考图 → 关键帧模式
-                body["extra_body"] = {"image": images}
-                body["mode"] = mode or "keyframes"
+                # reference 模式
+                body["images"] = raw
 
         # 带重试的请求（视频 API 限流 1次/分钟）
         last_error = None
 
+        client = self._get_raw_http()
         for attempt in range(4):  # 最多重试 4 次
-            async with _build_async_http_client(proxy=self.cfg.proxy, timeout=120) as client:
-                resp = await client.post(
-                    f"{self.cfg.base_url}/videos",
-                    json=body,
-                    headers={
-                        "Authorization": f"Bearer {self.cfg.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                )
+            resp = await client.post(
+                f"{self.cfg.base_url}/videos",
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {self.cfg.api_key}",
+                    "Content-Type": "application/json",
+                },
+            )
 
-                if resp.status_code == 429:
-                    last_error = f"视频生成限流（1次/分钟），请等待后重试"
-                    # 429 限流 — 等待后重试
-                    retry_after = resp.headers.get("Retry-After", "60")
-                    try:
-                        wait = float(retry_after)
-                    except ValueError:
-                        wait = 60.0
-                    wait = min(wait, 90)
-                    if attempt < 3:
-                        await asyncio.sleep(wait)
-                        continue
+            if resp.status_code == 429:
+                # 提取真实错误信息(免费额度耗尽等)
+                try:
+                    err = resp.json().get("error", {})
+                    last_error = (
+                        f"视频生成限流/额度不足: {err.get('message', '请稍后重试')}"
+                    )
+                except Exception:
+                    last_error = "视频生成限流（1次/分钟），请等待后重试"
+                retry_after = resp.headers.get("Retry-After", "60")
+                try:
+                    wait = float(retry_after)
+                except ValueError:
+                    wait = 60.0
+                wait = min(wait, 90)
+                if attempt < 3:
+                    await asyncio.sleep(wait)
+                    continue
+                else:
+                    break  # 重试耗尽，用干净的 last_error 提示，而非原始 429
 
-                if resp.status_code == 503:
-                    last_error = f"视频队列已满，请稍后重试"
-                    # 503 队列满 — 等待后重试
-                    try:
-                        err_body = resp.json()
-                        if "retry_after" in err_body:
-                            wait = min(float(err_body["retry_after"]), 60.0)
-                        else:
-                            wait = 15.0
-                    except Exception:
-                        wait = 15.0
-                    if attempt < 3:
-                        await asyncio.sleep(wait)
-                        continue
-
-                if resp.status_code == 200:
-                    return resp.json()
-
-                # 其他错误
+            if resp.status_code == 503:
+                # 503 队列满 / 无可用渠道 — 提取真实错误信息并等待后重试
+                err_body = {}
                 try:
                     err_body = resp.json()
-                    err_msg = err_body.get("error", {}).get("message", resp.text)
                 except Exception:
-                    err_msg = resp.text[:300]
-                raise AdapterError(
-                    f"{self.name} 视频生成失败 (HTTP {resp.status_code}): {err_msg}",
-                    backend=self.key, retryable=False,
-                )
+                    pass
+                msg = err_body.get("error", {}).get("message") or err_body.get("message") or ""
+                code = err_body.get("code", "")
+                if "queue" in msg.lower() or "full" in msg.lower() or "queue_full" in code:
+                    last_error = "视频服务端队列已满，请等待 1-2 分钟后重试"
+                elif "channel" in msg.lower() or "not_found" in code:
+                    last_error = f"视频模型当前不可用: {msg or code or resp.text[:200]}"
+                else:
+                    last_error = f"视频服务端暂时不可用（503）: {msg or '请稍后重试'}"
+                try:
+                    if "retry_after" in err_body:
+                        wait = min(float(err_body["retry_after"]), 60.0)
+                    else:
+                        wait = 15.0
+                except Exception:
+                    wait = 15.0
+                if attempt < 3:
+                    await asyncio.sleep(wait)
+                    continue
+                else:
+                    break  # 重试耗尽，用干净的 last_error 提示，而非原始 503
+
+            if resp.status_code == 200:
+                return resp.json()
+
+            # 其他错误
+            try:
+                err_body = resp.json()
+                err_msg = err_body.get("error", {}).get("message", resp.text)
+            except Exception:
+                err_msg = resp.text[:300]
+            raise AdapterError(
+                f"{self.name} 视频生成失败 (HTTP {resp.status_code}): {err_msg}",
+                backend=self.key, retryable=False,
+            )
 
         raise AdapterError(
             last_error or "视频生成失败，请稍后重试",
@@ -396,22 +438,22 @@ class AgnesAdapter(BaseAdapter):
 
     async def get_video_status(self, task_id: str) -> dict[str, Any]:
         """查询视频生成任务状态，带限流重试。"""
-        async with _build_async_http_client(proxy=self.cfg.proxy, timeout=30) as client:
-            for attempt in range(3):
-                resp = await client.get(
-                    f"{self.cfg.base_url}/videos/{task_id}",
-                    headers={"Authorization": f"Bearer {self.cfg.api_key}"},
-                )
-                if resp.status_code == 429:
-                    # 被限流，等待后重试
-                    retry_after = resp.headers.get("Retry-After", "10")
-                    wait = float(retry_after) if retry_after.isdigit() else 10.0
-                    await asyncio.sleep(min(wait, 30))
-                    continue
-                resp.raise_for_status()
-                return resp.json()
-            resp.raise_for_status()  # 重试耗尽，抛出异常
+        client = self._get_raw_http()
+        for attempt in range(3):
+            resp = await client.get(
+                f"{self.cfg.base_url}/videos/{task_id}",
+                headers={"Authorization": f"Bearer {self.cfg.api_key}"},
+            )
+            if resp.status_code == 429:
+                # 被限流，等待后重试
+                retry_after = resp.headers.get("Retry-After", "10")
+                wait = float(retry_after) if retry_after.isdigit() else 10.0
+                await asyncio.sleep(min(wait, 30))
+                continue
+            resp.raise_for_status()
             return resp.json()
+        resp.raise_for_status()  # 重试耗尽，抛出异常
+        return resp.json()
 
 
 # ============================================================

@@ -223,7 +223,7 @@
   .badge.error { background: rgba(244,63,94,.15); color: #fb7185; border: 1px solid rgba(244,63,94,.25); }
 
   /* Input area */
-  .input-area { padding: 16px 24px 18px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+  .input-area { padding: 16px 24px 18px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--surface); position: relative; }
   .input-row { display: flex; gap: 10px; align-items: flex-end; }
   .input-row textarea {
     flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
@@ -366,6 +366,45 @@
   .loading span { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
   .loading span:nth-child(2) { animation-delay: .2s; }
   .loading span:nth-child(3) { animation-delay: .4s; }
+  .video-progress-track { height: 8px; background: var(--surface3); border-radius: 20px; overflow: hidden; }
+  .video-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); border-radius: 20px; transition: width .6s ease; }
+  /* 排队中：进度条待命态 — 全宽灰色流动条，提示"在排队，未开始渲染" */
+  .video-progress-track.phase-waiting .video-progress-fill {
+    width: 100% !important;
+    background: var(--surface3);
+    background-image: linear-gradient(90deg, var(--surface3) 0%, var(--frame3-a, var(--frame3)) 40%, var(--surface3) 80%);
+    background-size: 200% 100%;
+    animation: waitingFlow 1.6s linear infinite;
+    border-radius: 20px;
+  }
+  @keyframes waitingFlow { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  /* 渲染中：进度条正式填充态 */
+  .video-progress-fill.phase-rendering { background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); }
+  /* 阶段标签配色 */
+  #video-progress-pct.phase-waiting { color: var(--text3); }
+  #video-progress-pct.phase-rendering { color: var(--accent2); font-weight: 600; }
+  #video-progress-pct.phase-downloading { color: #34d399; font-weight: 600; }
+  /* 分段刻度线：把进度条分成 排队(10%) / 生成(70%) / 下载(20%) 三段，白色细竖线标示分界 */
+  .video-progress-track { position: relative; }
+  .video-progress-track .video-progress-marks {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  }
+  .video-progress-track .video-progress-marks span {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: rgba(255,255,255,.35);
+  }
+  /* 分段标签（进度条下方三段小字，随当前段高亮） */
+  .video-progress-seg {
+    display: flex; margin-top: 8px; font-family: var(--font-mono); font-size: var(--fs-10);
+    color: var(--text3); gap: 2px;
+  }
+  .video-progress-seg .seg { text-align: center; transition: color .2s, font-weight .2s; }
+  .video-progress-seg .seg.active { color: var(--accent2); font-weight: 700; }
+  .video-progress-seg .seg.done { color: #34d399; }
+  .video-progress-seg .seg-wait { flex: 10; }
+  .video-progress-seg .seg-gen  { flex: 70; }
+  .video-progress-seg .seg-dl   { flex: 20; }
+
   @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
@@ -418,6 +457,38 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-28); color: var(--text3); transition: all .15s var(--ease); flex-shrink: 0;
   }
+
+  /* 聊天页图片上传预览条 */
+  .chat-img-previews {
+    position: absolute; left: 24px; right: 24px; bottom: calc(100% + 4px); z-index: 10;
+    display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,.15);
+  }
+  .chat-img-slot {
+    width: 52px; height: 52px; border-radius: 8px; position: relative;
+    border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; background: var(--surface2);
+  }
+  .chat-img-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .chat-img-slot .remove {
+    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+    border-radius: 50%; background: rgba(0,0,0,.75); color: #fff; border: none;
+    font-size: var(--fs-11); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; line-height: 1; opacity: 0; transition: opacity .15s; padding: 0;
+  }
+  .chat-img-slot:hover .remove { opacity: 1; }
+  .btn-attach {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+    border-radius: 10px; width: 40px; min-width: 40px; padding: 8px 0; cursor: pointer;
+    font-size: var(--fs-16); transition: all .15s var(--ease); align-self: flex-end;
+  }
+  .btn-attach:hover { border-color: var(--accent2); color: var(--text1); }
+  /* 消息气泡内的图片 */
+  .msg-imgs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .msg-imgs img {
+    max-height: 120px; max-width: 200px; border-radius: 8px;
+    object-fit: cover; display: block; border: 1px solid var(--border);
+  }
   .ref-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
   .ref-add input { display: none; }
 
@@ -436,6 +507,336 @@
     font-size: var(--fs-12); color: var(--text3); margin-top: 10px; padding: 10px 12px;
     background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
   }
+
+  /* ========== 画布页 ========== */
+  #page-canvas { flex: 1; min-height: 0; }
+
+  .canvas-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; flex-shrink: 0;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  .canvas-title { font-size: var(--fs-14); font-weight: 600; color: var(--text); margin-right: 8px; }
+  .canvas-toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .canvas-tool-btn {
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text2); font-size: var(--fs-12);
+    padding: 5px 12px; cursor: pointer; transition: all .15s;
+    font-family: var(--font); white-space: nowrap;
+  }
+  .canvas-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* 缩放控制组 */
+  .canvas-zoom-controls { display: flex; align-items: center; gap: 4px; }
+  .canvas-zoom-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--surface3); border: 1px solid var(--border);
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; font-family: var(--font);
+  }
+  .canvas-zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .canvas-zoom-pct {
+    font-size: var(--fs-11); color: var(--text3); min-width: 42px; text-align: center;
+    font-family: var(--font-mono);
+  }
+
+  /* 画布视口 */
+  .canvas-body {
+    flex: 1; position: relative; overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* 网格层（background-position 跟随 pan/zoom，不随 DOM 缩放） */
+  .canvas-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  /* 世界层（CSS transform: translate(panX,panY) scale(zoom)，origin top-left） */
+  .canvas-world {
+    position: absolute; top: 0; left: 0; z-index: 5;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  .canvas-edge-layer {
+    position: absolute; top: 0; left: 0; overflow: visible;
+    pointer-events: none; z-index: 2;
+    width: 20000px; height: 20000px;
+  }
+
+  /* 节点（通用：ref / image / video） */
+  .canvas-node {
+    position: absolute; z-index: 10;
+    width: 200px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 12px; overflow: visible;
+    cursor: move; user-select: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .canvas-node:hover, .canvas-node.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 20px rgba(0,0,0,.5);
+  }
+  .canvas-node.status-running { border-color: var(--accent); animation: cvPulse 1.2s ease-in-out infinite; }
+  .canvas-node.status-done { border-color: #34d399; }
+  .canvas-node.status-error { border-color: #f87171; }
+  @keyframes cvPulse {
+    0%,100% { box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 20px rgba(0,0,0,.5); }
+    50% { box-shadow: 0 0 0 5px var(--accent-glow), 0 4px 28px rgba(0,0,0,.6); }
+  }
+
+  /* 节点头部（图标 + 标签 + 设置按钮） */
+  .cv-node-head {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 9px; background: var(--frame2);
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 2;
+  }
+  .cv-node-icon { font-size: 14px; flex-shrink: 0; }
+  .cv-node-label {
+    flex: 1; font-size: var(--fs-12); color: var(--text2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .cv-node-gear {
+    width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0;
+    background: var(--surface3); border: 1px solid var(--border);
+    color: var(--text2); font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .cv-node-gear:hover { border-color: var(--accent); color: var(--accent); }
+  .cv-node-remove {
+    position: absolute; top: 5px; right: 30px; width: 18px; height: 18px;
+    border-radius: 50%; background: rgba(0,0,0,.7); color: #fff;
+    border: none; font-size: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s; z-index: 15;
+    line-height: 1;
+  }
+  .canvas-node:hover .cv-node-remove { opacity: 1; }
+
+  /* 节点主体（图 / 视频 / 占位） */
+  .cv-node-body { position: relative; z-index: 1; }
+  .cv-node-img {
+    width: 100%; height: 120px; object-fit: cover; display: block; pointer-events: none;
+    border-radius: 0 0 0 0;
+  }
+  .cv-node-video {
+    width: 100%; height: 112px; object-fit: cover; display: block;
+    background: #000; pointer-events: auto;
+  }
+  /* 预览区右上角全屏按钮：hover 节点预览区才显示，只对已有结果的节点渲染 */
+  .cv-node-fullscreen {
+    position: absolute; top: 6px; right: 6px; z-index: 20;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(0,0,0,.6); color: #fff;
+    border: 1px solid rgba(255,255,255,.18);
+    font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s, background .15s;
+    line-height: 1;
+  }
+  .canvas-node:hover .cv-node-fullscreen { opacity: 1; }
+  .cv-node-fullscreen:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* 视频全屏 overlay：黑底居中 + controls，点遮罩 / ESC 关闭（与图片 zoom-overlay 风格统一） */
+  .cv-video-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,.85);
+    display: none; align-items: center; justify-content: center;
+    cursor: zoom-out;
+  }
+  .cv-video-overlay.show { display: flex; }
+  .cv-video-overlay video {
+    max-width: 95vw; max-height: 90vh;
+    border-radius: var(--radius);
+    box-shadow: 0 0 60px rgba(0,0,0,.8);
+    background: #000; cursor: default;
+  }
+  .cv-video-overlay .cv-video-close {
+    position: fixed; top: 20px; right: 24px;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.2); font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .cv-video-overlay .cv-video-close:hover { background: var(--accent); border-color: var(--accent); }
+  .cv-node-placeholder {
+    height: 120px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    color: var(--text3); font-size: var(--fs-11);
+    border-radius: 0 0 12px 12px;
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.02) 10px, rgba(255,255,255,.02) 20px);
+  }
+  .cv-node-placeholder .cv-ph-icon { font-size: 22px; opacity: .5; }
+  .cv-node-status {
+    font-size: var(--fs-10); color: var(--text3);
+    padding: 5px 9px; background: var(--frame2);
+    border-radius: 0 0 12px 12px; text-align: center;
+  }
+  .cv-node-status.running { color: var(--accent); }
+  .cv-node-status.error { color: #f87171; }
+
+  /* 连线端口（输出=右侧, 输入=左侧） */
+  .cv-port {
+    position: absolute; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--surface2);
+    border: 2px solid var(--accent); z-index: 30;
+    cursor: crosshair;
+    transition: transform .12s, background .12s;
+    box-shadow: 0 0 6px rgba(0,0,0,.5);
+    top: 50%; margin-top: -8px;  /* 默认垂直居中, in2 会覆盖 */
+  }
+  .cv-port:hover { transform: scale(1.4); background: var(--accent); }
+  .cv-port.out { right: -8px; }
+  .cv-port.in { left: -8px; }
+  .cv-port.in.in2 { top: 64%; }
+  .cv-port-tag {
+    position: absolute; right: 22px; top: -3px;
+    font-size: 9px; color: var(--text3); white-space: nowrap;
+    font-family: var(--font-mono); pointer-events: none;
+  }
+
+  /* 连线删除按钮 */
+  .cv-edge-del {
+    position: absolute; z-index: 15; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--surface3);
+    border: 1px solid var(--border); color: var(--text2);
+    font-size: 9px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s; pointer-events: auto;
+  }
+  .cv-edge-del:hover { color: #f87171; border-color: #f87171; opacity: 1; }
+  .cv-edges:hover .cv-edge-del, .cv-edge-hit:hover + .cv-edge-del { opacity: 1; }
+
+  /* 临时连线（拖拽中） */
+  .cv-drag-edge { stroke: var(--accent) !important; stroke-width: 2 !important; }
+
+  /* 右键菜单 */
+  .cv-ctxmenu {
+    position: fixed; z-index: 1000; min-width: 172px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.6);
+    padding: 5px; display: none;
+    backdrop-filter: blur(8px);
+  }
+  .cv-ctxmenu.show { display: block; }
+  .cv-ctx-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 7px; cursor: pointer;
+    font-size: var(--fs-13); color: var(--text);
+    transition: background .1s;
+  }
+  .cv-ctx-item:hover { background: var(--surface3); color: var(--accent); }
+  .cv-ctx-item .cv-ctx-ico { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .cv-ctx-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+  .cv-ctx-sub { font-size: var(--fs-10); color: var(--text3); padding: 2px 10px 4px; }
+
+  /* 侧滑参数面板（展开窗口） */
+  .cv-panel {
+    position: absolute; top: 10px; right: 10px; z-index: 40;
+    width: 244px; max-width: 74%; max-height: calc(100% - 20px);
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 11px; box-shadow: -8px 0 32px rgba(0,0,0,.5);
+    display: flex; flex-direction: column;
+    transform: translateX(120%); transition: transform .25s ease;
+    overflow: hidden;
+  }
+  .cv-panel.show { transform: translateX(0); }
+  .cv-panel-head {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    background: var(--frame2); flex-shrink: 0;
+  }
+  .cv-panel-title { flex: 1; font-size: var(--fs-12); font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cv-panel-close {
+    width: 20px; height: 20px; border-radius: 6px;
+    background: var(--surface3); border: 1px solid var(--border);
+    color: var(--text2); cursor: pointer; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cv-panel-close:hover { color: var(--accent); border-color: var(--accent); }
+  .cv-panel-body {
+    overflow-y: auto; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .cv-panel-field { display: flex; flex-direction: column; gap: 3px; }
+  .cv-panel-field label {
+    font-size: var(--fs-10); color: var(--text2); font-weight: 500;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cv-panel-field label .cv-flabel-hint { color: var(--text3); font-weight: 400; font-size: 10px; }
+  .cv-panel-field textarea, .cv-panel-field input, .cv-panel-field select {
+    background: var(--frame); border: 1px solid var(--border2);
+    border-radius: 7px; color: var(--text); padding: 6px 8px;
+    font-size: var(--fs-12); font-family: var(--font);
+    transition: border-color .15s; width: 100%; box-sizing: border-box;
+  }
+  .cv-panel-field textarea { resize: vertical; min-height: 46px; line-height: 1.45; }
+  .cv-panel-field input:focus, .cv-panel-field textarea:focus, .cv-panel-field select:focus {
+    border-color: var(--accent); outline: none;
+  }
+  .cv-panel-row { display: flex; gap: 6px; }
+  .cv-panel-row > * { flex: 1; min-width: 0; }
+  .cv-panel-linklist {
+    display: flex; gap: 5px; flex-wrap: wrap;
+    background: var(--frame); border: 1px dashed var(--border2);
+    border-radius: 7px; padding: 6px; min-height: 34px;
+  }
+  .cv-panel-linklist .cv-link-thumb {
+    width: 34px; height: 34px; object-fit: cover; border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+  .cv-panel-linklist .cv-link-empty { font-size: var(--fs-10); color: var(--text3); align-self: center; }
+  .cv-panel-run {
+    background: var(--accent); border: none; border-radius: 8px;
+    color: #fff; font-size: var(--fs-13); font-weight: 600;
+    padding: 8px; cursor: pointer; transition: background .15s;
+    font-family: var(--font); white-space: nowrap;
+  }
+  .cv-panel-run:hover { background: var(--accent2); }
+  .cv-panel-run:disabled { background: var(--surface3); color: var(--text3); cursor: not-allowed; }
+  .cv-panel-result {
+    border-radius: 9px; overflow: hidden; border: 1px solid var(--border2);
+    background: var(--frame); display: none;
+  }
+  .cv-panel-result.show { display: block; }
+  .cv-panel-result img, .cv-panel-result video { width: 100%; display: block; }
+
+  /* 小地图 */
+  .canvas-minimap {
+    position: absolute; bottom: 180px; right: 12px; z-index: 30;
+    width: 140px; height: 100px;
+    background: rgba(19,19,22,.85); border: 1px solid var(--border2);
+    border-radius: 8px; overflow: hidden;
+    backdrop-filter: blur(4px);
+  }
+  .canvas-minimap canvas { display: block; width: 100%; height: 100%; }
+  .minimap-viewport {
+    position: absolute; border: 1px solid var(--accent);
+    background: rgba(99,102,241,.15); border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* 拖拽添加时的提示 */
+  .canvas-drop-hint {
+    position: absolute; inset: 0; z-index: 50;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(99,102,241,.12);
+    border: 2px dashed var(--accent); border-radius: 8px;
+    pointer-events: none;
+    font-size: var(--fs-16); color: var(--accent2); font-weight: 600;
+  }
+  .canvas-body.drag-over .canvas-drop-hint { display: flex; }
 
   /* ========== Docs ========== */
   #page-docs { padding: 28px 24px; overflow-y: auto; }
@@ -815,8 +1216,8 @@
           <span class="arrow">▶</span>
         </button>
         <div class="nav-sub" id="image-models">
-          <button class="nav-sub-btn active" data-model="agnes-image-2.1-flash">Agnes 2.1 Flash</button>
-          <button class="nav-sub-btn" data-model="agnes-image-2.5-flash">Agnes 2.5 Flash</button>
+          <button class="nav-sub-btn" data-model="agnes-image-2.1-flash">Agnes 2.1 Flash</button>
+          <button class="nav-sub-btn active" data-model="agnes-image-2.5-flash">Agnes 2.5 Flash</button>
         </div>
       </div>
       <div class="nav-group">
@@ -825,10 +1226,12 @@
           <span class="arrow">▶</span>
         </button>
         <div class="nav-sub" id="video-models">
-          <button class="nav-sub-btn active" data-model="agnes-video-v2.0">Agnes Video V2.0</button>
-          <button class="nav-sub-btn" data-model="agnes-video-2.5-flash">Agnes Video 2.5 Flash</button>
+          <button class="nav-sub-btn active" data-model="agnes-video-2.5-flash">Agnes Video 2.5 Flash</button>
         </div>
       </div>
+      <button class="nav-btn" data-page="canvas">
+        <span class="icon">🖼</span> 画布
+      </button>
       <button class="nav-btn" data-page="docs">
         <span class="icon">📖</span> API 文档
       </button>
@@ -920,7 +1323,7 @@
         </label>
         <label>反向提示词 <span class="label-hint">（不想要的内容）</span></label>
         <textarea class="negative-input" id="img-negative-prompt" placeholder="例如：blurry, low quality, ugly, deformed fingers, extra limbs, text, watermark"></textarea>
-        <label>参考图 <span class="label-hint">（拖拽或点击上传，最多 4 张）</span></label>
+        <label>参考图 <span class="label-hint">（拖拽或点击上传，最多 5 张）</span></label>
         <div class="ref-images" id="img-ref-images">
           <label class="ref-add" id="img-ref-add" title="添加参考图">
             ＋
@@ -947,7 +1350,7 @@
   <div class="content" id="page-video" style="display:none;flex-direction:row;padding:0;gap:0">
     <div class="img-panel-form tinted">
       <h2>🎬 视频生成</h2>
-      <p class="img-subtitle">由 <span id="video-model-label">Agnes Video V2.0</span> 驱动，支持图生视频与关键帧动画</p>
+      <p class="img-subtitle">由 <span id="video-model-label">Agnes Video 2.5 Flash</span> 驱动，支持文生视频、首尾帧与多参考图</p>
 
       <label>提示词</label>
       <textarea id="video-prompt" placeholder="描述你想生成的视频...
@@ -955,10 +1358,10 @@
 例如：a beautiful sunset over the ocean with waves gently rolling onto the shore, cinematic quality, slow motion"></textarea>
 
       <button class="advanced-toggle" onclick="toggleAdvanced('video-advanced')">
-        <span class="arrow">▶</span> 高级选项 <span class="label-hint">分辨率 · 反向提示词 · 参考图</span>
+        <span class="arrow">▶</span> 高级选项 <span class="label-hint">画幅 · 时长 · 参考图</span>
       </button>
       <div class="advanced-panel" id="video-advanced">
-        <label>画面比例 &amp; 清晰度</label>
+        <label>画面比例</label>
         <div class="video-preset-row">
           <div class="video-preset-item">
             <select id="video-aspect" onchange="updateVideoPreset()">
@@ -967,51 +1370,46 @@
               <option value="1:1">1:1 方形</option>
               <option value="4:3">4:3 传统</option>
               <option value="3:4">3:4 竖版</option>
-            </select>
-          </div>
-          <div class="video-preset-item">
-            <select id="video-quality" onchange="updateVideoPreset()">
-              <option value="720p">720p 高清</option>
-              <option value="480p">480p 标清</option>
-              <option value="1080p">1080p 全高清</option>
+              <option value="21:9">21:9 超宽</option>
             </select>
           </div>
         </div>
 
-        <label>时长 &amp; 帧率</label>
         <div class="video-preset-row">
           <div class="video-preset-item">
+            <label>时长</label>
             <select id="video-duration" onchange="updateVideoPreset()">
-              <option value="5">约 5 秒</option>
-              <option value="3">约 3 秒</option>
-              <option value="10">约 10 秒</option>
+              <option value="4">4 秒</option>
+              <option value="5" selected>5 秒（默认）</option>
+              <option value="8">8 秒</option>
+              <option value="12">12 秒</option>
             </select>
           </div>
           <div class="video-preset-item">
-            <select id="video-fps" onchange="updateVideoPreset()">
-              <option value="24">24 fps</option>
-              <option value="30">30 fps</option>
+            <label>生成模式</label>
+            <select id="video-mode" onchange="updateVideoPreset()">
+              <option value="auto">自动（根据参考图）</option>
+              <option value="text">文生视频</option>
+              <option value="keyframe">首尾帧</option>
+              <option value="reference">多参考图</option>
             </select>
           </div>
         </div>
 
         <div class="video-calc-info" id="video-calc-info">
-          实际参数: 1280×720 · 121 帧 · ~5.0 秒
+          实际参数: 720P · 5 秒 · 16:9
         </div>
 
-        <label>随机种子 &amp; 推理步数</label>
         <div class="video-preset-row">
           <div class="video-preset-item">
-            <input type="number" id="video-seed" placeholder="种子 (可选)" style="width:100%;background: var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size: var(--fs-14);outline:none;font-family:var(--font)">
-          </div>
-          <div class="video-preset-item">
-            <input type="number" id="video-steps" placeholder="推理步数 (可选)" min="1" style="width:100%;background: var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size: var(--fs-14);outline:none;font-family:var(--font)">
+            <label>随机种子 <span class="label-hint" id="video-seed-hint">（留空 = 随机，生成后回填实际种子）</span></label>
+            <input type="number" id="video-seed" placeholder="种子（可选）">
           </div>
         </div>
 
         <label>反向提示词 <span class="label-hint">（不想要的内容）</span></label>
         <textarea class="negative-input" id="video-negative-prompt" placeholder="例如：people, text, watermark, blurry, distorted, low quality"></textarea>
-        <label>参考图 <span class="label-hint">（拖拽或点击上传。单张=图生视频，多张=关键帧）</span></label>
+        <label>参考图 <span class="label-hint">（拖拽或点击上传。1 张=文生视频首帧，2 张=首尾帧，多张=多参考，最多 5 张）</span></label>
         <div class="ref-images" id="video-ref-images">
           <label class="ref-add" id="video-ref-add" title="添加参考图">
             ＋
@@ -1028,6 +1426,16 @@
           <span style="font-size: var(--fs-13);color:var(--text2)" id="video-progress-text">正在生成视频，请耐心等待...</span>
         </div>
         <div style="font-size: var(--fs-12);color:var(--text3);margin-top:8px;font-family:var(--font-mono)" id="video-progress-status"></div>
+        <div class="video-progress-track" style="margin-top:10px">
+          <div class="video-progress-fill" id="video-progress-fill"></div>
+          <div class="video-progress-marks"><span style="left:10%"></span><span style="left:80%"></span></div>
+        </div>
+        <div class="video-progress-seg" id="video-progress-seg">
+          <span class="seg seg-wait" data-seg="wait">① 排队</span>
+          <span class="seg seg-gen" data-seg="gen">② 生成</span>
+          <span class="seg seg-dl" data-seg="dl">③ 下载</span>
+        </div>
+        <div style="font-size: var(--fs-12);color:var(--text2);margin-top:6px;font-family:var(--font-mono)" id="video-progress-pct"></div>
       </div>
 
       <div class="img-history-label" id="video-history-label" style="display:none">生成历史</div>
@@ -1040,6 +1448,62 @@
         <div>视频预览区</div>
         <div>在左侧输入提示词并点击生成，视频将显示在这里</div>
         <div style="font-size: var(--fs-12);color:var(--text3);margin-top:8px">视频生成通常需要 1-5 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Page -->
+  <div class="content" id="page-canvas" style="display:none; overflow:hidden; flex-direction:column; padding:0">
+    <!-- 工具栏 -->
+    <div class="canvas-toolbar">
+      <span class="canvas-title">🖼 几何画布</span>
+      <button class="canvas-tool-btn" onclick="cvCtxAddNode('ref')" title="添加参考图（拖文件进画布也可）">＋ 参考图</button>
+      <button class="canvas-tool-btn" onclick="cvCtxAddNode('image')" title="新建图片生成节点">🎨 生成图片</button>
+      <button class="canvas-tool-btn" onclick="cvCtxAddNode('video')" title="新建视频生成节点">🎬 生成视频</button>
+      <button class="canvas-tool-btn" onclick="initCanvasFromRefs()" title="从视频页参考图导入为参考图节点">从参考图导入</button>
+      <button class="canvas-tool-btn" onclick="clearCanvas()" title="清空画布">清空</button>
+      <div class="canvas-toolbar-sep"></div>
+      <div class="canvas-zoom-controls">
+        <button class="canvas-zoom-btn" onclick="canvasZoomOut()" title="缩小 (−)">−</button>
+        <span class="canvas-zoom-pct" id="canvas-zoom-pct">100%</span>
+        <button class="canvas-zoom-btn" onclick="canvasZoomIn()" title="放大 (+)">+</button>
+        <button class="canvas-zoom-btn canvas-zoom-fit" onclick="canvasFitView()" title="适应画布">⊡</button>
+      </div>
+      <div class="canvas-toolbar-sep"></div>
+      <button class="canvas-tool-btn" onclick="showPage('video')" title="回到视频页">← 返回视频页</button>
+      <div style="flex:1"></div>
+      <span style="font-size:var(--fs-11);color:var(--text3)">右键画布/节点唤起菜单 · 双击节点展开参数</span>
+    </div>
+
+    <!-- 画布主体（视口） -->
+    <div class="canvas-body" id="canvas-body">
+      <!-- 网格背景层（跟随 pan/zoom） -->
+      <div class="canvas-grid" id="canvas-grid"></div>
+
+      <!-- 世界层（CSS transform: translate + scale） -->
+      <div class="canvas-world" id="canvas-world">
+        <svg id="canvas-edge-svg" class="canvas-edge-layer"></svg>
+        <!-- .canvas-node 动态插入 -->
+      </div>
+
+      <!-- 小地图（固定右下角，视口） -->
+      <div class="canvas-minimap" id="canvas-minimap">
+        <canvas id="minimap-canvas" width="140" height="100"></canvas>
+        <div class="minimap-viewport" id="minimap-viewport"></div>
+      </div>
+
+      <!-- 底栏已删除：提示词/参数全部内嵌在节点里 -->
+
+      <!-- 右键菜单 -->
+      <div class="cv-ctxmenu" id="cv-ctxmenu"></div>
+
+      <!-- 侧滑参数面板（节点展开窗口） -->
+      <div class="cv-panel" id="cv-panel">
+        <div class="cv-panel-head">
+          <span class="cv-panel-title" id="cv-panel-title">节点参数</span>
+          <button class="cv-panel-close" onclick="closeNodePanel()" title="关闭">✕</button>
+        </div>
+        <div class="cv-panel-body" id="cv-panel-body"></div>
       </div>
     </div>
   </div>
@@ -1058,8 +1522,8 @@
         </button>
         <div class="docs-model-content" id="docs-image-models">
           <div class="docs-tabs">
-            <button class="docs-tab active" onclick="switchDocsTab('image-2.1', this)">Agnes Image 2.1 Flash</button>
-            <button class="docs-tab" onclick="switchDocsTab('image-2.5', this)">Agnes Image 2.5 Flash</button>
+            <button class="docs-tab" onclick="switchDocsTab('image-2.1', this)">Agnes Image 2.1 Flash</button>
+            <button class="docs-tab active" onclick="switchDocsTab('image-2.5', this)">Agnes Image 2.5 Flash</button>
           </div>
           <div id="docs-image-2.1" class="docs-model-body">
             <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
@@ -1157,77 +1621,11 @@
       <!-- Video Model Selector -->
       <div class="docs-model-section">
         <button class="docs-model-toggle" onclick="toggleDocsModel('docs-video-models', this)">
-          🎬 <span id="docs-video-model-label">Video V2.0</span>
+          🎬 <span id="docs-video-model-label">Video 2.5 Flash</span>
           <span class="arrow">▶</span>
         </button>
         <div class="docs-model-content" id="docs-video-models">
-          <div class="docs-tabs">
-            <button class="docs-tab active" onclick="switchDocsTab('video-2.0', this)">Agnes Video V2.0</button>
-            <button class="docs-tab" onclick="switchDocsTab('video-2.5-flash', this)">Agnes Video 2.5 Flash</button>
-          </div>
-          <div id="docs-video-2.0" class="docs-model-body">
-            <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
-              <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
-                <tr><td>模型名称</td><td><code>agnes-video-v2.0</code></td></tr>
-                <tr><td>创建任务</td><td><code>POST /v1/videos</code></td></tr>
-                <tr><td>查询结果</td><td><code>GET /agnesapi?video_id=...</code></td></tr>
-                <tr><td>生成方式</td><td>异步任务：先创建 → 轮询状态 → 获取视频 URL</td></tr>
-                <tr><td>当前价格</td><td style="color:var(--agnes)">$0 / 秒（免费）</td></tr>
-                <tr><td>速率限制</td><td>约 1 次 / 分钟</td></tr>
-              </table></div>
-            <div class="docs-card"><h3 class="docs-h3">核心能力</h3>
-              <div class="docs-grid">
-                <div class="docs-tag">🎥 文生视频</div><div class="docs-tag">🖼️ 图生视频</div>
-                <div class="docs-tag">🔑 关键帧动画</div><div class="docs-tag">🎬 电影级输出</div>
-                <div class="docs-tag">📐 场景运动控制</div><div class="docs-tag">👁️ 视觉一致性</div>
-              </div></div>
-            <div class="docs-card"><h3 class="docs-h3">创建任务参数</h3>
-              <table class="docs-table">
-                <tr><th style="width:160px">参数</th><th style="width:70px">类型</th><th style="width:60px">必填</th><th>说明</th></tr>
-                <tr><td><code>model</code></td><td>string</td><td>✅</td><td>固定为 <code>agnes-video-v2.0</code></td></tr>
-                <tr><td><code>prompt</code></td><td>string</td><td>✅</td><td>视频内容的文本描述</td></tr>
-                <tr><td><code>image</code></td><td>string</td><td></td><td>图生视频的参考图（纯 Base64 或 URL）</td></tr>
-                <tr><td><code>mode</code></td><td>string</td><td></td><td><code>ti2vid</code>（图生视频）或 <code>keyframes</code>（关键帧）</td></tr>
-                <tr><td><code>width</code></td><td>integer</td><td></td><td>视频宽度，默认 1152</td></tr>
-                <tr><td><code>height</code></td><td>integer</td><td></td><td>视频高度，默认 768</td></tr>
-                <tr><td><code>num_frames</code></td><td>integer</td><td></td><td>视频帧数，≤441 且须为 <strong>8n+1</strong></td></tr>
-                <tr><td><code>frame_rate</code></td><td>number</td><td></td><td>帧率 1–60，默认 24</td></tr>
-                <tr><td><code>num_inference_steps</code></td><td>integer</td><td></td><td>推理步数，更多=更高质量</td></tr>
-                <tr><td><code>seed</code></td><td>integer</td><td></td><td>随机种子，用于可复现结果</td></tr>
-                <tr><td><code>negative_prompt</code></td><td>string</td><td></td><td>反向提示词</td></tr>
-                <tr><td><code>extra_body.image</code></td><td>array</td><td></td><td>关键帧模式的输入图片数组</td></tr>
-              </table></div>
-            <div class="docs-card"><h3 class="docs-h3">分辨率预设（3 档 × 5 比例）</h3>
-              <div style="overflow-x:auto"><table class="docs-table docs-size-table">
-                <tr><th>Ratio</th><th>480p</th><th>720p</th><th>1080p</th></tr>
-                <tr><td><code>16:9</code></td><td>854×480</td><td>1280×720</td><td>1920×1080</td></tr>
-                <tr><td><code>9:16</code></td><td>480×854</td><td>720×1280</td><td>1080×1920</td></tr>
-                <tr><td><code>1:1</code></td><td>480×480</td><td>720×720</td><td>1080×1080</td></tr>
-                <tr><td><code>4:3</code></td><td>640×480</td><td>960×720</td><td>1440×1080</td></tr>
-                <tr><td><code>3:4</code></td><td>480×640</td><td>720×960</td><td>1080×1440</td></tr>
-              </table></div>
-              <div class="docs-note">💡 Agnes 会自动将不匹配的尺寸映射到最近的预设档位。</div>
-            </div>
-            <div class="docs-card"><h3 class="docs-h3">时长 &amp; 帧率对照（8n+1 规则）</h3>
-              <table class="docs-table">
-                <tr><th>目标时长</th><th>24 fps</th><th>30 fps</th></tr>
-                <tr><td>约 3 秒</td><td><code>num_frames: 73</code></td><td><code>num_frames: 89</code></td></tr>
-                <tr><td>约 5 秒</td><td><code>num_frames: 121</code></td><td><code>num_frames: 153</code></td></tr>
-                <tr><td>约 10 秒</td><td><code>num_frames: 241</code></td><td><code>num_frames: 297</code></td></tr>
-                <tr><td>约 18 秒（上限）</td><td><code>num_frames: 441</code></td><td><code>num_frames: 441</code></td></tr>
-              </table>
-              <div class="docs-note">📐 公式：<code>seconds = num_frames / frame_rate</code>，<code>num_frames</code> 必须 ≤ 441 且为 8n+1。</div>
-            </div>
-            <div class="docs-card"><h3 class="docs-h3">任务状态</h3>
-              <table class="docs-table">
-                <tr><th style="width:130px">状态</th><th>说明</th></tr>
-                <tr><td><code>queued</code></td><td>任务在队列中等待</td></tr>
-                <tr><td><code>in_progress</code></td><td>视频正在生成</td></tr>
-                <tr><td><code>completed</code></td><td>生成成功，视频 URL 在 <code>metadata.url</code></td></tr>
-                <tr><td><code>failed</code></td><td>生成失败，查看 <code>error</code> 字段</td></tr>
-              </table></div>
-          </div>
-          <div id="docs-video-2.5-flash" class="docs-model-body" style="display:none">
+          <div id="docs-video-2.5-flash" class="docs-model-body">
             <div class="docs-card"><h3 class="docs-h3">模型信息</h3>
               <table class="docs-table"><tr><th style="width:130px">属性</th><th>值</th></tr>
                 <tr><td>模型名称</td><td><code>agnes-video-2.5-flash</code></td></tr>
@@ -1237,7 +1635,7 @@
                 <tr><td>当前价格</td><td style="color:var(--agnes)">~~$0.025/秒~~ → <strong>$0 / 秒</strong>（限时免费）</td></tr>
                 <tr><td>速率限制</td><td>约 1 次 / 分钟</td></tr>
               </table></div>
-            <div class="docs-card"><h3 class="docs-h3">与 Video V2.0 的差异</h3>
+            <div class="docs-card"><h3 class="docs-h3">⚠️ Flash 专属限制</h3>
               <table class="docs-table">
                 <tr><th style="width:160px">校验项</th><th>Flash 规则</th><th>校验失败响应</th></tr>
                 <tr><td><code>size</code></td><td>仅支持 <code>"720P"</code></td><td>HTTP 400：<code>size must be 720P</code></td></tr>
@@ -1345,10 +1743,10 @@
         </table>
       </div>
       <div class="about-info">
-        <div>模型：<span style="font-family:'AveriaGruesa',sans-serif">Agnes 2.0 Flash</span> / <span style="font-family:'AveriaGruesa',sans-serif">DeepSeek V4 Pro</span></div>
+        <div>模型：<span id="about-text-model" style="font-family:'AveriaGruesa',sans-serif">Agnes 3.0 Flash</span> / <span id="about-deepseek-model" style="font-family:'AveriaGruesa',sans-serif">deepseek-chat</span></div>
         <div>API 端口：8800（OpenAI 兼容格式）</div>
-        <div>图片生成：<span style="font-family:'AveriaGruesa',sans-serif">Agnes Image 2.1 Flash</span></div>
-        <div>视频生成：<span style="font-family:'AveriaGruesa',sans-serif">Agnes Video V2.0</span></div>
+        <div>图片生成：<span id="about-image-model" style="font-family:'AveriaGruesa',sans-serif">Agnes Image 2.5 Flash</span></div>
+        <div>视频生成：<span id="about-video-model" style="font-family:'AveriaGruesa',sans-serif">Agnes Video 2.5 Flash</span></div>
       </div>
     </div>
   </div>
@@ -1434,8 +1832,11 @@
 
   <!-- Input (Chat) -->
   <div class="input-area tinted" id="input-chat">
+    <input type="file" id="chat-image-input" multiple accept="image/*" style="display:none" onchange="handleChatImageFiles(this)">
+    <div id="chat-image-previews" class="chat-img-previews" style="display:none"></div>
     <div class="input-row">
-      <textarea id="chat-input" rows="1" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" onkeydown="handleKey(event)"></textarea>
+      <button class="btn-attach" id="btn-attach" title="上传图片（点击选择或拖拽到对话框）" onclick="document.getElementById('chat-image-input').click()">📎</button>
+      <textarea id="chat-input" rows="1" placeholder="输入消息... (Enter 发送, Shift+Enter 换行，可上传/拖拽图片)" onkeydown="handleKey(event)"></textarea>
       <button id="btn-send" onclick="sendMessage()">发送</button>
     </div>
     <div class="input-options">
@@ -1529,13 +1930,12 @@ async function initAPI() {
 })();
 
 // ========== Navigation ==========
-let currentImageModel = 'agnes-image-2.1-flash';
-let currentVideoModel = 'agnes-video-v2.0';
+let currentImageModel = 'agnes-image-2.5-flash';
+let currentVideoModel = 'agnes-video-2.5-flash';
 
 const MODEL_NAMES = {
   'agnes-image-2.1-flash': 'Agnes 2.1 Flash',
   'agnes-image-2.5-flash': 'Agnes 2.5 Flash',
-  'agnes-video-v2.0': 'Agnes Video V2.0',
   'agnes-video-2.5-flash': 'Agnes Video 2.5 Flash',
 };
 
@@ -1597,15 +1997,19 @@ function showPage(page) {
   document.getElementById('page-chat').style.display = page === 'chat' ? 'flex' : 'none';
   document.getElementById('page-image').style.display = page === 'image' ? 'flex' : 'none';
   document.getElementById('page-video').style.display = page === 'video' ? 'flex' : 'none';
+  document.getElementById('page-canvas').style.display = page === 'canvas' ? 'flex' : 'none';
   document.getElementById('page-docs').style.display = page === 'docs' ? 'block' : 'none';
   document.getElementById('page-about').style.display = page === 'about' ? 'block' : 'none';
   document.getElementById('page-settings').style.display = page === 'settings' ? 'block' : 'none';
   document.getElementById('input-chat').style.display = page === 'chat' ? 'block' : 'none';
-  const titles = { chat: '💬 智能对话', image: '🎨 图片生成', video: '🎬 视频生成', docs: '📖 API 文档', about: 'ℹ️ 关于', settings: '⚙️ 设置' };
+  const titles = { chat: '💬 智能对话', image: '🎨 图片生成', video: '🎬 视频生成', canvas: '🖼 画布编辑', docs: '📖 API 文档', about: 'ℹ️ 关于', settings: '⚙️ 设置' };
   document.getElementById('page-title').textContent = titles[page] || '';
   if (page === 'image' || page === 'video') {
     // 图片/视频页：badge 显示当前选中的模型名（随侧边栏切换实时更新）
     updateRouteInfo();
+  } else if (page === 'canvas') {
+    document.getElementById('route-info').textContent = '画布模式 · 可视化参考图布局';
+    showCanvasPage();
   } else {
     // 其余页：badge 显示固定的上下文说明
     document.getElementById('route-info').textContent =
@@ -1637,20 +2041,37 @@ btnSend.addEventListener('click', sendMessage);
 
 async function sendMessage() {
   const text = chatInput.value.trim();
-  if (!text) return;
+  if (!text && chatImages.length === 0) return;
 
   const empty = chatContainer.querySelector('.empty-state');
   if (empty) empty.remove();
 
-  addMessage('user', text);
+  const userImages = chatImages.slice();
+  addMessage('user', text, null, userImages);
   chatInput.value = '';
   chatInput.style.height = 'auto';
 
   const loadId = addLoading();
-  const backend = document.getElementById('backend-select').value;
+  let backend = document.getElementById('backend-select').value;
   const enableSearch = document.getElementById('search-toggle').checked;
   const isResearch = document.getElementById('research-toggle').checked;
-  const messages = [...chatHistory, { role: 'user', content: text }];
+
+  // 构造当前用户消息的 content（有图时用 OpenAI vision 数组格式）
+  let userContent = text;
+  if (userImages.length > 0) {
+    const parts = [];
+    if (text) parts.push({ type: 'text', text: text });
+    userImages.forEach(uri => parts.push({ type: 'image_url', image_url: { url: uri } }));
+    userContent = parts;
+    // 手动选了非 Agnes 后端（如 DeepSeek 纯文本）时，带图强制走 Agnes
+    if (backend !== 'agnes') {
+      showToast('当前后端不支持看图，已切换 Agnes 处理图片');
+      backend = 'agnes';
+      updateRouteInfo({ backend: 'agnes', reason: '图片消息' });
+    }
+  }
+
+  const messages = [...chatHistory, { role: 'user', content: userContent }];
 
   btnSend.disabled = true;
 
@@ -1683,9 +2104,13 @@ async function sendMessage() {
     }
     updateRouteInfo(route);
 
-    chatHistory.push({ role: 'user', content: text });
+    chatHistory.push({ role: 'user', content: userContent });
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+    // 发送成功：清空待发送图片预览
+    chatImages = [];
+    renderChatImagePreviews();
 
   } catch (e) {
     removeLoading(loadId);
@@ -1696,7 +2121,7 @@ async function sendMessage() {
   chatInput.focus();
 }
 
-function addMessage(role, text, route) {
+function addMessage(role, text, route, images) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
 
@@ -1711,8 +2136,15 @@ function addMessage(role, text, route) {
     }
   }
 
+  let imgsHtml = '';
+  if (images && images.length > 0) {
+    imgsHtml = `<div class="msg-imgs">` +
+      images.map(uri => `<img src="${uri}" alt="用户上传图片" style="border-radius:8px; max-height:120px;">`).join('') +
+      `</div>`;
+  }
+
   const rendered = role === 'assistant' ? renderMarkdown(text) : escapeHtml(text);
-  div.innerHTML = `<div class="bubble">${rendered}</div>${metaHtml}`;
+  div.innerHTML = `<div class="bubble">${imgsHtml}${rendered}</div>${metaHtml}`;
   chatContainer.appendChild(div);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
@@ -1811,6 +2243,11 @@ function handleKey(e) {
 chatInput.addEventListener('input', () => {
   chatInput.style.height = 'auto';
   chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
+});
+
+// 粘贴图片也能上传
+chatInput.addEventListener('paste', e => {
+  Array.from(e.clipboardData.files).forEach(f => addChatImage(f));
 });
 
 // ========== Image Generation ==========
@@ -1959,6 +2396,30 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeZoom();
 });
 
+// ========== Video 全屏 overlay（画布节点视频结果放大播放） ==========
+function cvOpenVideoOverlay(url, title) {
+  const old = document.getElementById('cv-video-overlay');
+  if (old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'cv-video-overlay';
+  ov.className = 'cv-video-overlay show';
+  ov.innerHTML = `
+    <video controls loop autoplay src="${url}"></video>
+    <button class="cv-video-close" title="关闭 (ESC)">✕</button>
+    <div class="zoom-hint">${escapeHtml(title || '视频预览')} · 点击遮罩 / ESC 关闭</div>`;
+  document.body.appendChild(ov);
+  const close = () => {
+    const v = ov.querySelector('video');
+    if (v) v.pause();
+    ov.classList.remove('show');
+    setTimeout(() => ov.remove(), 200);
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.classList.contains('cv-video-close')) close(); });
+  document.addEventListener('keydown', onKey);
+}
+
 function addToHistory(entry) {
   document.getElementById('history-label').style.display = 'block';
   const container = document.getElementById('img-result');
@@ -2006,32 +2467,18 @@ let videoHistory = [];
 let currentVideoPreview = null;
 let videoPollTimer = null;
 
-const VIDEO_RES_PRESETS = {
-  '16:9': { '480p': [854,480], '720p': [1280,720], '1080p': [1920,1080] },
-  '9:16': { '480p': [480,854], '720p': [720,1280], '1080p': [1080,1920] },
-  '1:1':  { '480p': [480,480], '720p': [720,720],   '1080p': [1080,1080] },
-  '4:3':  { '480p': [640,480], '720p': [960,720],   '1080p': [1440,1080] },
-  '3:4':  { '480p': [480,640], '720p': [720,960],   '1080p': [1080,1440] },
+// Agnes Video 2.5 Flash 固定 720P，画幅用 aspect_ratio，时长用 seconds（4-12 秒）
+const VIDEO_ASPECT_LABELS = {
+  '16:9': '16:9', '9:16': '9:16', '1:1': '1:1', '4:3': '4:3', '3:4': '3:4', '21:9': '21:9',
 };
-
-function nearest8nPlus1(target) {
-  const n = Math.round((target - 1) / 8);
-  return Math.min(8 * n + 1, 441);
-}
 
 function updateVideoPreset() {
   const aspect = document.getElementById('video-aspect').value;
-  const quality = document.getElementById('video-quality').value;
   const duration = parseInt(document.getElementById('video-duration').value);
-  const fps = parseInt(document.getElementById('video-fps').value);
-
-  const [width, height] = VIDEO_RES_PRESETS[aspect][quality];
-  const targetFrames = duration * fps;
-  const numFrames = nearest8nPlus1(targetFrames);
-  const actualDuration = (numFrames / fps).toFixed(1);
+  const mode = document.getElementById('video-mode').value;
 
   document.getElementById('video-calc-info').textContent =
-    `实际参数: ${width}×${height} · ${numFrames} 帧 · ~${actualDuration} 秒`;
+    `实际参数: 720P · ${duration} 秒 · ${aspect}${mode !== 'auto' ? ' · ' + mode : ''}`;
 }
 
 async function generateVideo() {
@@ -2042,14 +2489,9 @@ async function generateVideo() {
   const negativePrompt = document.getElementById('video-negative-prompt').value.trim() || null;
 
   const aspect = document.getElementById('video-aspect').value;
-  const quality = document.getElementById('video-quality').value;
   const duration = parseInt(document.getElementById('video-duration').value);
-  const fps = parseInt(document.getElementById('video-fps').value);
+  const mode = document.getElementById('video-mode').value;
   const seedStr = document.getElementById('video-seed').value.trim();
-  const stepsStr = document.getElementById('video-steps').value.trim();
-
-  const [width, height] = VIDEO_RES_PRESETS[aspect][quality];
-  const numFrames = nearest8nPlus1(duration * fps);
 
   btn.disabled = true;
   btn.textContent = '⏳ 提交中...';
@@ -2062,12 +2504,12 @@ async function generateVideo() {
   const reqBody = {
     prompt,
     model: currentVideoModel,
-    width, height,
-    num_frames: numFrames,
-    frame_rate: fps,
+    seconds: String(duration || 5),
+    aspect_ratio: aspect,
   };
+  // 模式：auto 时由后端根据参考图数量推断，否则显式指定
+  if (mode && mode !== 'auto') reqBody.mode = mode;
   if (seedStr) reqBody.seed = parseInt(seedStr);
-  if (stepsStr) reqBody.num_inference_steps = parseInt(stepsStr);
   if (negativePrompt) reqBody.negative_prompt = negativePrompt;
   if (videoRefImages.length > 0) reqBody.reference_images = [...videoRefImages];
 
@@ -2090,6 +2532,9 @@ async function generateVideo() {
     }
 
     const taskId = data.task_id;
+    // 提交成功后，若后端返回了实际种子（且用户未手动指定），回填到种子框以便复现
+    backfillSeed(data.raw || data);
+
     if (!taskId) {
       const raw = data.raw || data;
       const videoUrl = extractVideoUrl(raw);
@@ -2110,9 +2555,65 @@ async function generateVideo() {
     document.getElementById('video-progress-text').textContent = '视频生成中，请耐心等待（通常 1-5 分钟）...';
     document.getElementById('video-progress-status').textContent = '任务 ID: ' + taskId;
 
-    const POLL_INTERVAL = 15000;
-    const MAX_POLLS = 40;
+    const POLL_INTERVAL = 6000;   // 6 秒一次，渲染完成时最快 6s 内接住结果（原 15s）
+    const MAX_POLLS = 300;  // 6s × 300 = 30 分钟（渲染实测 ~7 分钟，排队 + 渲染易超 10 分钟）
     let pollCount = 0;
+
+    const progFill = document.getElementById('video-progress-fill');
+    const progPct = document.getElementById('video-progress-pct');
+    const progTrack = document.querySelector('.video-progress-track');
+    const segRoot = document.getElementById('video-progress-seg');
+
+    // 三段综合进度：排队(0–10%) / 生成(10–80%) / 下载(80–100%)
+    // 一条进度条统一表达"生成速度 + 下载速度"的综合进展，而非只反映服务端渲染。
+    const WAIT_SPAN = 10, GEN_BASE = 10, GEN_SPAN = 70, GEN_TOP = GEN_BASE + GEN_SPAN;
+    const toOverall = (stage, localPct) => {
+      const p = Math.min(100, Math.max(0, localPct));
+      if (stage === 'wait') return p * WAIT_SPAN / 100;                       // 0 → 10
+      if (stage === 'gen')  return GEN_BASE + p * GEN_SPAN / 100;            // 10 → 80
+      return GEN_TOP + p * (100 - GEN_TOP) / 100;                            // 80 → 100
+    };
+
+    // stage: 'wait' | 'gen' | 'dl' | 'done' | 'failed'
+    // localPct: 该段内 0–100
+    const setVideoPhase = (stage, localPct, note) => {
+      const overall = toOverall(stage, localPct);
+      if (progFill) progFill.style.width = overall + '%';
+      if (progTrack) {
+        progTrack.classList.toggle('phase-waiting', stage === 'wait');
+        progTrack.classList.toggle('phase-rendering', stage === 'gen');
+      }
+      if (segRoot) {
+        segRoot.querySelectorAll('.seg').forEach(s => {
+          const k = s.dataset.seg;
+          const active = (k === 'wait' && stage === 'wait')
+            || (k === 'gen'  && stage === 'gen')
+            || (k === 'dl'   && stage === 'dl');
+          const done = (k === 'wait' && (stage === 'gen' || stage === 'dl' || stage === 'done'))
+            || (k === 'gen'  && (stage === 'dl' || stage === 'done'))
+            || (stage === 'done');
+          s.classList.toggle('active', active);
+          s.classList.toggle('done', done && !active);
+        });
+      }
+      if (progPct) {
+        progPct.classList.remove('phase-waiting', 'phase-rendering', 'phase-downloading');
+        if (stage === 'done') {
+          progPct.textContent = '完成 · 已载入前端 ▶ 可播放';
+          progPct.classList.add('phase-downloading');
+        } else if (stage === 'wait') {
+          progPct.classList.add('phase-waiting');
+          progPct.textContent = `① 排队中 · 综合 ${Math.round(overall)}%${note ? ' · ' + note : ''}`;
+        } else if (stage === 'gen') {
+          progPct.classList.add('phase-rendering');
+          progPct.textContent = `② 生成 ${Math.round(localPct)}% · 综合 ${Math.round(overall)}%`;
+        } else if (stage === 'dl') {
+          progPct.classList.add('phase-downloading');
+          progPct.textContent = `③ 下载 ${Math.round(localPct)}% · 综合 ${Math.round(overall)}% · 正在加载视频`;
+        }
+      }
+    };
+    setVideoPhase('wait', 0);
 
     videoPollTimer = setInterval(async () => {
       pollCount++;
@@ -2122,8 +2623,11 @@ async function generateVideo() {
 
         if (!statusResp.ok || statusData.error) {
           if (statusResp.status === 429) {
+            // 限流：视为仍在排队，综合进度缓慢推进，避免卡死在 0
+            const waitPct = Math.min(100, 10 + (pollCount - 1) * 3);
+            setVideoPhase('wait', waitPct, `限流 · 已等待 ${pollCount * 6}s`);
             document.getElementById('video-progress-status').textContent =
-              `任务 ID: ${taskId} · 状态: 限流等待中... · 已等待 ${pollCount * 15} 秒`;
+              `任务 ID: ${taskId} · 状态: 限流等待中... · 已等待 ${pollCount * 6} 秒`;
             return;
           }
           clearInterval(videoPollTimer);
@@ -2136,23 +2640,49 @@ async function generateVideo() {
 
         const raw = statusData.raw || statusData;
         const status = extractVideoStatus(raw);
+        const progress = (raw.progress != null) ? Math.round(raw.progress) : 0;
+
+        // 判定阶段（以 status 为主，progress 辅助）：
+        //   in_progress / progress>0 → 渲染中；否则 → 排队中
+        // 注意 Agnes 渲染中 status='in_progress'（非 'processing'），渲染刚开时 progress 可能仍为 0，
+        // 所以"渲染中"必须靠 status 判定，不能只看 progress>0。
+        let stage, localPct, statusLabel;
+        if (status === 'completed' || status === 'done' || status === 'ready' || status === 'succeeded') {
+          stage = 'done'; localPct = 100; statusLabel = '生成完成，正在下载视频…';
+        } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+          stage = 'failed'; localPct = progress; statusLabel = '失败';
+        } else if (status === 'in_progress' || progress > 0) {
+          stage = 'gen'; localPct = progress; statusLabel = `生成中 ${progress}%`;
+        } else {
+          stage = 'wait'; localPct = Math.min(100, pollCount * 8); statusLabel = '排队中';
+        }
+
+        if (stage !== 'failed' && stage !== 'done') {
+          setVideoPhase(stage, localPct);
+        }
         document.getElementById('video-progress-status').textContent =
-          `任务 ID: ${taskId} · 状态: ${status} · 已等待 ${pollCount * 15} 秒`;
+          `任务 ID: ${taskId} · ${statusLabel} · 已等待 ${pollCount * 6} 秒`;
 
         if (status === 'completed' || status === 'done' || status === 'ready' || status === 'succeeded') {
+          setVideoPhase('dl', 0, '开始下载');
           clearInterval(videoPollTimer);
           const videoUrl = extractVideoUrl(raw);
           if (videoUrl) {
-            progressEl.style.display = 'none';
-            showVideoResult(videoUrl, prompt);
+            downloadVideoPhase(videoUrl, prompt, () => {
+              // 下载/缓存完成后揭示结果并收起进度条
+              setVideoPhase('done', 100);
+              setTimeout(() => { progressEl.style.display = 'none'; }, 600);
+              showVideoResult(videoUrl, prompt);
+            });
           } else {
             showToast('⚠️ 生成完成但未找到视频链接，响应已打印到控制台');
             console.log('Video status response:', raw);
+            setVideoPhase('done', 100);
             progressEl.style.display = 'none';
           }
           btn.disabled = false;
           btn.textContent = '🎬 生成视频';
-        } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+        } else if (stage === 'failed') {
           clearInterval(videoPollTimer);
           progressEl.style.display = 'none';
           showToast('❌ 视频生成失败: ' + (raw.error || raw.message || status));
@@ -2160,8 +2690,9 @@ async function generateVideo() {
           btn.textContent = '🎬 生成视频';
         } else if (pollCount >= MAX_POLLS) {
           clearInterval(videoPollTimer);
-          progressEl.style.display = 'none';
-          showToast('⏰ 轮询超时，请稍后手动检查');
+          document.getElementById('video-progress-status').textContent =
+            `任务 ID: ${taskId} · ${statusLabel} · 已等待 ${pollCount * 6} 秒`;
+          showToast(`⏰ 已等待 ${Math.round(pollCount * 6 / 60)} 分钟仍未完成，任务仍在 Agnes 端运行。任务 ID: ${taskId}`);
           btn.disabled = false;
           btn.textContent = '🎬 生成视频';
         }
@@ -2179,14 +2710,107 @@ async function generateVideo() {
 }
 
 function extractVideoUrl(raw) {
-  if (raw.metadata && raw.metadata.url) return raw.metadata.url;
-  return raw.video_url || raw.url || (raw.output && raw.output.url)
-    || (raw.result && raw.result.url) || (raw.data && raw.data[0] && raw.data[0].url)
-    || '';
+  if (!raw || typeof raw !== 'object') return '';
+  // Agnes 包装结构 {code, data:{...}}: 穿透 data 层再找
+  const cands = [raw, raw.data, raw.output, raw.result, raw.metadata].filter(Boolean);
+  for (const c of cands) {
+    if (c.url) return c.url;
+    if (c.video_url) return c.video_url;
+  }
+  if (Array.isArray(raw.data) && raw.data[0] && raw.data[0].url) return raw.data[0].url;
+  return '';
+}
+
+// 从任务响应中提取实际使用的种子并回填到种子输入框（仅当用户未手动指定时）
+function backfillSeed(raw) {
+  const seedInput = document.getElementById('video-seed');
+  const hint = document.getElementById('video-seed-hint');
+  if (!seedInput || !raw) return;
+  if (seedInput.value.trim() !== '') return; // 用户手动指定过，不动
+  const seed = raw.seed
+    || (raw.metadata && raw.metadata.seed)
+    || (raw.output && raw.output.seed);
+  if (seed === undefined || seed === null || seed === '') return;
+  seedInput.value = seed;
+  if (hint) hint.textContent = `（本次实际种子：${seed}，可用于复现）`;
 }
 
 function extractVideoStatus(raw) {
-  return (raw.status || raw.state || raw.progress_status || 'processing').toLowerCase();
+  if (!raw || typeof raw !== 'object') return 'processing';
+  // Agnes 包装结构 {code, data:{...}}: 穿透 data/output/result/metadata 层
+  const cands = [raw, raw.data, raw.output, raw.result, raw.metadata].filter(Boolean);
+  for (const c of cands) {
+    if (typeof c === 'object' && (c.status || c.state || c.progress_status)) {
+      return String(c.status || c.state || c.progress_status).toLowerCase();
+    }
+  }
+  return 'processing';
+}
+
+// 第三段「下载」进度：生成完成后视频需要拉到前端才能播放。
+// 用 fetch 流式读取 videoUrl，按已接收字节 / 总字节推进 dl 段进度；
+// 下载完才把结果揭示到画廊。若后端不支持 Content-Length 或读取失败，
+// 则退化为"时间驱动"的平滑推进，保证 UI 不会卡死在 80%。
+function downloadVideoPhase(videoUrl, prompt, onDone) {
+  const progFill = document.getElementById('video-progress-fill');
+  const progPct = document.getElementById('video-progress-pct');
+  const segRoot = document.getElementById('video-progress-seg');
+  const GEN_TOP = 80;
+
+  const setDL = (localPct, note) => {
+    const overall = GEN_TOP + Math.min(100, Math.max(0, localPct)) * (100 - GEN_TOP) / 100;
+    if (progFill) progFill.style.width = overall + '%';
+    if (segRoot) {
+      segRoot.querySelectorAll('.seg').forEach(s => {
+        const k = s.dataset.seg;
+        s.classList.toggle('active', k === 'dl');
+        s.classList.toggle('done', (k === 'wait' || k === 'gen'));
+      });
+    }
+    if (progPct) {
+      progPct.classList.remove('phase-waiting', 'phase-rendering', 'phase-downloading');
+      progPct.classList.add('phase-downloading');
+      progPct.textContent = `③ 下载 ${Math.min(100, Math.round(localPct))}% · 综合 ${Math.round(overall)}%${note ? ' · ' + note : ''}`;
+    }
+  };
+
+  setDL(0, '开始下载');
+
+  // 预加载 + 字节级流式进度
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    setDL(100, '完成');
+    onDone();
+  };
+
+  const startAt = performance.now();
+  // 时间驱动的兜底推进（下载 <5s 完成时也能让 dl 段走完）
+  const ticker = setInterval(() => {
+    const elapsed = performance.now() - startAt;
+    // 前 4s 内从 0 走到 90%，之后保持 90% 直到真实下载完成
+    const tPct = Math.min(90, (elapsed / 4000) * 90);
+    setDL(tPct, '载入中');
+  }, 200);
+
+  fetch(videoUrl, { mode: 'no-cors' })
+    .then(resp => {
+      if (!resp.body) { clearInterval(ticker); finish(); return; }
+      const reader = resp.body.getReader();
+      let total = 0;
+      const read = () => reader.read().then(({ done, value }) => {
+        if (done) { clearInterval(ticker); finish(); return; }
+        total += value.length;
+        // 有 Content-Length 时按字节算精确进度；否则按已收字节映射到 90%
+        const cl = parseInt(resp.headers.get('Content-Length') || '0', 10);
+        const pct = cl > 0 ? Math.min(99, total / cl * 100) : Math.min(90, Math.log(total + 1) / Math.log(50 * 1024 * 1024 + 1) * 90);
+        setDL(pct, `${(total / 1024 / 1024).toFixed(1)} MB`);
+        return read();
+      }).catch(() => { clearInterval(ticker); finish(); });
+      read();
+    })
+    .catch(() => { clearInterval(ticker); finish(); });
 }
 
 function showVideoResult(videoUrl, prompt) {
@@ -2281,11 +2905,12 @@ function toggleAdvanced(panelId) {
 function handleRefFiles(input, containerId) {
   const files = Array.from(input.files);
   const arr = containerId === 'img-ref-images' ? imgRefImages : videoRefImages;
-  const maxSlots = 4;
+  // 图片参考图最多 4 张；视频 Flash 最多 5 张
+  const maxSlots = containerId === 'video-ref-images' ? 5 : 4;
 
   files.forEach(file => {
     if (!file.type.startsWith('image/')) return;
-    if (arr.length >= maxSlots) { showToast('最多 4 张参考图'); return; }
+    if (arr.length >= maxSlots) { showToast(`最多 ${maxSlots} 张参考图`); return; }
 
     resizeAndEncode(file, 1024, 1024, 0.85).then(dataUri => {
       arr.push(dataUri);
@@ -2333,7 +2958,7 @@ function addRefThumb(dataUri, index, containerId) {
   container.insertBefore(slot, addBtn);
 
   const arr = containerId === 'img-ref-images' ? imgRefImages : videoRefImages;
-  if (arr.length >= 4) addBtn.style.display = 'none';
+  if (arr.length >= (containerId === 'video-ref-images' ? 5 : 4)) addBtn.style.display = 'none';
 }
 
 function removeRefImage(index, containerId) {
@@ -2357,6 +2982,52 @@ function setupDragDrop(containerId) {
     handleRefFiles({ files: dt.files }, containerId);
   });
 }
+
+// ========== 聊天图片上传 ==========
+let chatImages = []; // 按上传顺序存放 base64 dataURI
+
+async function addChatImage(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    const dataUri = await resizeAndEncode(file, 1024, 1024, 0.85);
+    chatImages.push(dataUri);
+    renderChatImagePreviews();
+  } catch (e) {
+    showToast('图片加载失败: ' + e.message);
+  }
+}
+
+function handleChatImageFiles(input) {
+  Array.from(input.files).forEach(f => addChatImage(f));
+  input.value = '';
+}
+
+function renderChatImagePreviews() {
+  const box = document.getElementById('chat-image-previews');
+  if (chatImages.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = '';
+  box.innerHTML = chatImages.map((uri, i) => `
+    <div class="chat-img-slot">
+      <img src="${uri}" alt="预览 ${i + 1}">
+      <button class="remove" title="移除" onclick="removeChatImage(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeChatImage(index) {
+  chatImages.splice(index, 1);
+  renderChatImagePreviews();
+}
+
+// 聊天输入区拖拽上传
+(function setupChatImageDrop() {
+  const chatArea = document.getElementById('input-chat');
+  if (!chatArea) return;
+  chatArea.addEventListener('dragover', e => { e.preventDefault(); });
+  chatArea.addEventListener('drop', e => {
+    e.preventDefault();
+    Array.from(e.dataTransfer.files).forEach(f => addChatImage(f));
+  });
+})();
 
 // ========== Health Check ==========
 async function checkHealth() {
@@ -3100,9 +3771,53 @@ async function loadApiKeyConfig() {
     document.getElementById('deepseek-base-url').value = data.deepseek.base_url || '';
     document.getElementById('agnes-proxy').value = data.agnes.proxy || '';
     document.getElementById('deepseek-proxy').value = data.deepseek.proxy || '';
+
+    // 动态同步 .env 里的模型名到关于页 / 文档页（.env 换模型后无需手改前端）
+    applyModelNames(data);
   } catch (e) {
     console.error('加载配置失败:', e);
   }
+}
+
+// 把后端返回的模型配置填进界面里所有写死模型名的位置。
+// 模型名 = "agnes-image-2.5-flash" 这类，去掉 "agnes-" 前缀再美化成 "Agnes Image 2.5 Flash"。
+function prettyModel(id) {
+  if (!id) return '';
+  return id.replace('agnes-', 'Agnes ').replace(/-(\d)/g, ' $1').replace(/-flash$/, ' Flash');
+}
+function applyModelNames(data) {
+  if (!data || !data.agnes) return;
+  // 文本/多模态模型（关于页）
+  const textLabel = document.getElementById('about-text-model');
+  if (textLabel) textLabel.textContent = prettyModel(data.agnes.model);
+  // 图片默认模型（关于页）
+  const imgDefault = (data.agnes.image_models || [])[0];
+  const imgLabel = document.getElementById('about-image-model');
+  if (imgLabel && imgDefault) imgLabel.textContent = prettyModel(imgDefault);
+  // 视频默认模型（关于页）
+  const vidDefault = (data.agnes.video_models || [])[0];
+  const vidLabel = document.getElementById('about-video-model');
+  if (vidLabel && vidDefault) vidLabel.textContent = prettyModel(vidDefault);
+  // DeepSeek 模型（关于页）
+  const dsLabel = document.getElementById('about-deepseek-model');
+  if (dsLabel && data.deepseek && data.deepseek.model) dsLabel.textContent = data.deepseek.model;
+
+  // 同步图片/视频页的当前模型标签（默认取 .env 里 image_models / video_models 第一个）
+  if (imgDefault) currentImageModel = imgDefault;
+  if (vidDefault) currentVideoModel = vidDefault;
+  syncModelLabels();
+}
+
+// 让图片/视频页 + 文档页的"当前模型"标签、侧边栏 active 项跟 .env 走
+function syncModelLabels() {
+  const imgLabel = document.getElementById('img-model-label');
+  if (imgLabel) imgLabel.textContent = MODEL_NAMES[currentImageModel] || prettyModel(currentImageModel);
+  const vidLabel = document.getElementById('video-model-label');
+  if (vidLabel) vidLabel.textContent = MODEL_NAMES[currentVideoModel] || prettyModel(currentVideoModel);
+  // 侧边栏 active 项对齐当前默认模型
+  document.querySelectorAll('#image-models .nav-sub-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.model === currentImageModel);
+  });
 }
 
 function toggleKeyVisibility(inputId) {
@@ -3179,7 +3894,15 @@ function startApp() {
       if (label) label.textContent = MODEL_NAMES[imgModel] || imgModel;
     }
     if (vidModel) {
-      currentVideoModel = vidModel;
+      // 仅接受仍可用的视频模型；旧版 v2.0 已下线，回退到 2.5 Flash
+      const validVidModels = ['agnes-video-2.5-flash'];
+      if (validVidModels.includes(vidModel)) {
+        currentVideoModel = vidModel;
+      } else {
+        vidModel = 'agnes-video-2.5-flash';
+        currentVideoModel = vidModel;
+        localStorage.setItem('currentVideoModel', vidModel);
+      }
       document.querySelectorAll('#video-models .nav-sub-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.model === vidModel);
       });
@@ -3191,6 +3914,1192 @@ function startApp() {
   setInterval(checkHealth, 30000);
   chatInput.focus();
 }
+
+// ========== 几何画布逻辑（节点图：ref / image / video） ==========
+
+// 视口状态（pan/zoom）
+let cvPan = { x: 0, y: 0 };
+let cvZoom = 1;
+const CV_ZOOM_MIN = 0.25, CV_ZOOM_MAX = 3.0;
+let cvNodeIdCounter = 0;
+let cvEdgeIdCounter = 0;
+
+// 节点图：nodes 为 { id: node }，edges 为 [{ id, from, to, slot }]
+const cvNodes = {};
+const cvEdges = [];
+let cvSelectedId = null;
+
+// 各类型节点元数据（尺寸、端口）
+const CV_TYPE_META = {
+  ref:   { icon: '📷', title: '参考图',   w: 200, h: 176, out: true,  in: false },
+  image: { icon: '🎨', title: '图片生成', w: 200, h: 200, out: true,  in: true },
+  video: { icon: '🎬', title: '视频生成', w: 200, h: 208, out: true,  in: true },
+};
+// 画幅比例 → 高宽比（用于节点结果区自适应）
+const CV_RATIO = {
+  '1:1': 1, '16:9': 9/16, '9:16': 16/9, '4:3': 3/4, '3:4': 4/3,
+  '3:2': 2/3, '2:3': 3/2, '21:9': 9/21,
+};
+// 节点结果区实际高度:生成节点按画幅比例, 固定宽 meta.w; 参考图按真实图片高宽比自适应; 其余用 meta.h
+function cvNodeContentHeight(node, meta) {
+  if (node.type === 'image' || node.type === 'video') {
+    const ratio = node.type === 'image' ? node.data.ratio : node.data.aspect;
+    const rh = CV_RATIO[ratio];
+    if (rh) {
+      // 结果区宽 = 节点宽, 高 = 宽 × rh; 限制在 [112, 320] 内
+      return Math.min(320, Math.max(112, Math.round(meta.w * rh)));
+    }
+  }
+  if (node.type === 'ref' && node.data.imgRatio) {
+    // 参考图: 高 = 宽 × 实际图片高宽比, 限制在 [96, 360] 内, 避免竖长图把节点撑爆
+    return Math.min(360, Math.max(96, Math.round(meta.w * node.data.imgRatio)));
+  }
+  return meta.h;
+}
+// 节点总高(结果区高 + 头部 + 状态条), 供端口定位
+function cvNodeTotalH(node, meta) {
+  const head = 30, statusBar = 0;
+  return cvNodeContentHeight(node, meta) + head;
+}
+
+// 读取 data URI 图片的高宽比（异步, 失败返回 null）, 供参考图节点自适应高度
+function cvImgRatio(dataUri) {
+  return new Promise(resolve => {
+    if (!dataUri) return resolve(null);
+    const img = new Image();
+    img.onload = () => resolve(img.height / img.width);
+    img.onerror = () => resolve(null);
+    img.src = dataUri;
+  });
+}
+
+// 各类型默认 data
+const CV_DEFAULTS = {
+  ref:   () => ({ label: '参考图', image: null }),
+  image: () => ({ prompt: '', size: '1K', ratio: '16:9', n: 1, negative: '', result: null }),
+  video: () => ({ prompt: '', aspect: '16:9', seconds: 5, mode: 'auto', seed: '', negative: '', result: null }),
+};
+
+// 将屏幕坐标（相对 canvas-body）转换为世界坐标
+function screenToWorld(sx, sy) {
+  return { x: (sx - cvPan.x) / cvZoom, y: (sy - cvPan.y) / cvZoom };
+}
+
+// 应用视口变换（DOM + 网格 + 连线 + 小地图）
+function applyCanvasViewport() {
+  const world = document.getElementById('canvas-world');
+  const grid  = document.getElementById('canvas-grid');
+  const pct   = document.getElementById('canvas-zoom-pct');
+  if (world) world.style.transform = `translate(${cvPan.x}px, ${cvPan.y}px) scale(${cvZoom})`;
+  if (grid) {
+    grid.style.backgroundSize = `${24 * cvZoom}px ${24 * cvZoom}px`;
+    grid.style.backgroundPosition = `${cvPan.x}px ${cvPan.y}px`;
+  }
+  if (pct) pct.textContent = Math.round(cvZoom * 100) + '%';
+  renderCanvasEdges();
+  renderMinimap();
+}
+
+function showCanvasPage() {
+  cvPan = { x: 0, y: 0 };
+  cvZoom = 1;
+  cvSelectedId = null;
+  applyCanvasViewport();
+  renderAllNodes();
+  syncCanvasParams();
+  requestAnimationFrame(canvasFitView);
+}
+
+// ---- 节点增删 ----
+
+function cvNewNode(type, wx, wy) {
+  const meta = CV_TYPE_META[type];
+  const id = 'n' + (++cvNodeIdCounter);
+  const data = CV_DEFAULTS[type]();
+  if (type === 'ref') {
+    const refCount = Object.values(cvNodes).filter(n => n.type === 'ref').length;
+    data.label = '参考图 ' + (refCount + 1);
+  }
+  cvNodes[id] = { id, type, x: wx - meta.w / 2, y: wy - 40, status: 'idle', data };
+  return id;
+}
+
+function cvRemoveNode(id, silent) {
+  if (!cvNodes[id]) return;
+  if (cvNodes[id]._pollTimer) clearInterval(cvNodes[id]._pollTimer);
+  delete cvNodes[id];
+  for (let i = cvEdges.length - 1; i >= 0; i--) {
+    if (cvEdges[i].from === id || cvEdges[i].to === id) cvEdges.splice(i, 1);
+  }
+  if (cvSelectedId === id) cvSelectedId = null;
+  if (!silent) renderAllNodes();
+}
+
+// 收集某生成节点的上游参考图 data URI（按 edges 连线顺序）
+function cvGatherRefs(node) {
+  const refs = [];
+  cvEdges.forEach(e => {
+    if (e.to !== node.id) return;
+    const src = cvNodes[e.from];
+    if (!src) return;
+    if (src.type === 'ref' && src.data.image) refs.push(src.data.image);
+    else if (src.type === 'image' && src.data.result) refs.push(src.data.result);
+  });
+  return refs;
+}
+
+// ---- 节点渲染 ----
+
+function renderAllNodes() {
+  const world = document.getElementById('canvas-world');
+  if (!world) return;
+  world.querySelectorAll('.canvas-node').forEach(n => n.remove());
+
+  Object.values(cvNodes).forEach(node => {
+    const meta = CV_TYPE_META[node.type];
+    const el = document.createElement('div');
+    el.className = 'canvas-node'
+      + (node.id === cvSelectedId ? ' selected' : '')
+      + (node.status && node.status !== 'idle' ? ' status-' + node.status : '');
+    el.style.left = node.x + 'px';
+    el.style.top  = node.y + 'px';
+    el.style.width = meta.w + 'px';
+    el.dataset.nodeId = node.id;
+
+    // 结果区按"画幅比例"自适应高度:固定宽 meta.w, 高 = 宽 × (比例高/比例宽)
+    // 生成节点无结果时用 meta.h 占位
+    const contentH = cvNodeContentHeight(node, meta);
+    el.dataset.h = contentH;  // 记录实际高度, 供端口/连线使用
+
+    let bodyHtml = '';
+    if (node.type === 'ref') {
+      const h = cvNodeContentHeight(node, meta);
+      bodyHtml = node.data.image
+        ? `<img class="cv-node-img" src="${node.data.image}" alt="" style="height:${h}px;object-fit:contain;background:#0b0b0e">`
+        : `<div class="cv-node-placeholder" style="height:${h}px"><div class="cv-ph-icon">📷</div>点击「＋参考图」选图</div>`;
+    } else if (node.type === 'image') {
+      const h = contentH;
+      if (node.data.result) {
+        bodyHtml = `<img class="cv-node-img" src="${node.data.result}" alt="" style="height:${h}px;object-fit:contain;background:#0b0b0e">`;
+      } else if (node.status === 'running') {
+        bodyHtml = `<div class="cv-node-status running" style="height:${h}px">⏳ 生成中...</div>`;
+      } else {
+        bodyHtml = `<div class="cv-node-placeholder" style="height:${h}px"><div class="cv-ph-icon">🎨</div>双击展开 · 填提示词生成</div>`;
+      }
+    } else if (node.type === 'video') {
+      const h = contentH;
+      if (node.data.result) {
+        bodyHtml = `<video class="cv-node-video" controls loop src="${node.data.result}" style="height:${h}px;object-fit:contain;background:#0b0b0e"></video>`;
+      } else if (node.status === 'running') {
+        bodyHtml = `<div class="cv-node-status running" style="height:${h}px">⏳ 渲染中 · 通常 1-5 分钟</div>`;
+      } else {
+        bodyHtml = `<div class="cv-node-placeholder" style="height:${h}px"><div class="cv-ph-icon">🎬</div>双击展开 · 填提示词生成</div>`;
+      }
+    }
+
+    // 连线端口
+    let ports = '';
+    if (meta.in) {
+      ports += `<div class="cv-port in" data-port="in" data-node="${node.id}" title="输入"></div>`;
+      if (node.type === 'video') {
+        ports += `<div class="cv-port in in2" data-port="in2" data-node="${node.id}" title="第二输入（尾帧）"><span class="cv-port-tag">尾帧</span></div>`;
+      }
+    }
+    if (meta.out) {
+      ports += `<div class="cv-port out" data-port="out" data-node="${node.id}" title="输出"></div>`;
+    }
+
+    el.innerHTML = `
+      <div class="cv-node-head">
+        <span class="cv-node-icon">${meta.icon}</span>
+        <span class="cv-node-label" title="${escapeHtml(node.data.label || meta.title)}">${escapeHtml(node.data.label || meta.title)}</span>
+        <button class="cv-node-gear" title="展开参数（双击节点也可）">⚙</button>
+      </div>
+      <div class="cv-node-body">${bodyHtml}${node.data.result ? `<button class="cv-node-fullscreen" data-act-full="1" title="全屏预览">⛶</button>` : ''}</div>
+      ${node.status === 'error' ? `<div class="cv-node-status error">⚠ 生成失败</div>` : ''}
+      ${ports}
+    `;
+
+    // 拖拽节点
+    el.addEventListener('pointerdown', e => {
+      if (e.target.classList.contains('cv-port')) return;
+      if (e.target.classList.contains('cv-node-gear')) return;
+      if (e.target.classList.contains('cv-node-fullscreen')) return;
+      if (e.target.tagName === 'VIDEO') return;
+      cvSelectedId = node.id;
+      el.classList.add('selected');
+      startNodeDrag(el, node, e);
+    });
+    el.querySelector('.cv-node-gear').addEventListener('click', e => {
+      e.stopPropagation(); openNodePanel(node.id);
+    });
+    // 预览区右上角全屏按钮：图片走 openZoom，视频走 cvOpenVideoOverlay
+    const fsBtn = el.querySelector('.cv-node-fullscreen');
+    if (fsBtn) fsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (node.type === 'video') cvOpenVideoOverlay(node.data.result, node.data.label || node.id);
+      else openZoom(node.data.result);
+    });
+    el.addEventListener('dblclick', e => {
+      if (e.target.tagName === 'VIDEO') return;
+      openNodePanel(node.id);
+    });
+    el.querySelectorAll('.cv-port.out').forEach(p => {
+      p.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        startEdgeDrag(node.id, e);
+      });
+    });
+    world.appendChild(el);
+  });
+
+  renderCanvasEdges();
+  renderCanvasThumbs();
+  renderMinimap();
+}
+
+// 节点拖拽（screen delta 除以 zoom 转世界 delta）
+function startNodeDrag(el, node, e) {
+  let dragging = false;
+  let sx = e.clientX, sy = e.clientY, ox = node.x, oy = node.y;
+  const onMove = ev => {
+    if (!dragging) {
+      if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 3) dragging = true;
+      else return;
+    }
+    node.x = ox + (ev.clientX - sx) / cvZoom;
+    node.y = oy + (ev.clientY - sy) / cvZoom;
+    el.style.left = node.x + 'px';
+    el.style.top  = node.y + 'px';
+    renderCanvasEdges();
+    renderMinimap();
+  };
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+  };
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+}
+
+// ---- 连线 ----
+
+// 节点端口世界坐标（与 .cv-port 的 CSS 位置保持一致：左侧 50% / 64%，右侧 50%）
+function cvPortPos(nodeId, kind) {
+  const node = cvNodes[nodeId];
+  if (!node) return null;
+  const meta = CV_TYPE_META[node.type];
+  const totalH = cvNodeTotalH(node, meta);  // 动态节点总高
+  if (kind === 'out') return { x: node.x + meta.w, y: node.y + totalH * 0.5 };
+  if (kind === 'in')  return { x: node.x, y: node.y + totalH * 0.5 };
+  if (kind === 'in2') return { x: node.x, y: node.y + totalH * 0.64 };
+  return null;
+}
+
+// 渲染所有边（SVG 贝塞尔, SVG 铺满 world 用世界坐标, 不随 pan/zoom 偏移）
+function renderCanvasEdges() {
+  const svg  = document.getElementById('canvas-edge-svg');
+  if (!svg) return;
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // SVG 用世界坐标, 直接铺在 canvas-world 内(被 pan/zoom 变换), 无需 mX/mY 偏移
+  // 用极大尺寸覆盖全部节点世界范围
+  svg.setAttribute('width', '20000');
+  svg.setAttribute('height', '20000');
+  svg.style.left = '0';
+  svg.style.top  = '0';
+  svg.style.position = 'absolute';
+  svg.style.overflow = 'visible';
+  svg.classList.add('cv-edges');
+
+  cvEdges.forEach(edge => {
+    const p1 = cvPortPos(edge.from, 'out');
+    const p2 = cvPortPos(edge.to, edge.slot || 'in');
+    if (!p1 || !p2) return;
+    const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+    const cpX = (x1 + x2) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} C${cpX},${y1} ${cpX},${y2} ${x2},${y2}`);
+    path.setAttribute('class', 'cv-edge-path');
+    path.setAttribute('stroke', 'rgba(129,140,248,.6)');
+    path.setAttribute('stroke-width', String(2 / cvZoom));
+    path.setAttribute('fill', 'none');
+    svg.appendChild(path);
+    // 命中区（更粗透明线, 便于删除时点中）+ 中点删除圆点（SVG circle）
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hit.setAttribute('d', path.getAttribute('d'));
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', String(18 / cvZoom));
+    hit.setAttribute('fill', 'none');
+    hit.style.pointerEvents = 'stroke';
+    hit.style.cursor = 'pointer';
+    hit.addEventListener('click', ev => { ev.stopPropagation(); cvRemoveEdge(edge.id); });
+    svg.appendChild(hit);
+  });
+}
+
+function cvRemoveEdge(id) {
+  const i = cvEdges.findIndex(e => e.id === id);
+  if (i >= 0) cvEdges.splice(i, 1);
+  renderAllNodes();
+}
+
+// 从输出端口拖线到输入端口
+let cvDragEdge = null;
+function startEdgeDrag(fromId, e) {
+  e.preventDefault();
+  const svg = document.getElementById('canvas-edge-svg');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('class', 'cv-drag-edge');
+  path.setAttribute('stroke', 'var(--accent)');
+  path.setAttribute('fill', 'none');
+  svg.appendChild(path);
+  cvDragEdge = { fromId, el: path };
+
+  const onMove = ev => {
+    if (!cvDragEdge) return;
+    const body = document.getElementById('canvas-body');
+    const rect = body.getBoundingClientRect();
+    const world = screenToWorld(ev.clientX - rect.left, ev.clientY - rect.top);
+    const p1 = cvPortPos(cvDragEdge.fromId, 'out');
+    // SVG 铺在 world 原点(0,0), 直接用世界坐标
+    const x1 = p1.x, y1 = p1.y, x2 = world.x, y2 = world.y;
+    const cpX = (x1 + x2) / 2;
+    cvDragEdge.el.setAttribute('d', `M${x1},${y1} C${cpX},${y1} ${cpX},${y2} ${x2},${y2}`);
+    cvDragEdge.el.setAttribute('stroke-width', String(2 / cvZoom));
+  };
+  const onUp = ev => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    cvDragEdge.el.remove();
+    const hit = document.elementFromPoint(ev.clientX, ev.clientY);
+    if (hit && hit.classList && hit.classList.contains('cv-port') && hit.classList.contains('in')) {
+      const toId = hit.dataset.node;
+      const slot = hit.dataset.port === 'in2' ? 'in2' : 'in';
+      if (toId !== cvDragEdge.fromId && cvNodes[toId]) {
+        const exists = cvEdges.some(ed => ed.from === cvDragEdge.fromId && ed.to === toId && (ed.slot || 'in') === slot);
+        if (!exists) {
+          cvEdges.push({ id: 'e' + (++cvEdgeIdCounter), from: cvDragEdge.fromId, to: toId, slot });
+          renderAllNodes();
+          showToast('🔗 已连线：' + CV_TYPE_META[cvNodes[cvDragEdge.fromId].type].title + ' → ' + CV_TYPE_META[cvNodes[toId].type].title);
+        } else {
+          showToast('⚠️ 已有连线');
+        }
+      }
+    }
+    cvDragEdge = null;
+  };
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+}
+
+function renderCanvasThumbs() {
+  const container = document.getElementById('canvas-ref-thumbs');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.values(cvNodes).forEach(node => {
+    if (node.type !== 'ref') return;
+    if (!node.data.image) return;
+    const img = document.createElement('img');
+    img.src = node.data.image;
+    img.title = node.data.label || '参考图';
+    container.appendChild(img);
+  });
+}
+
+// 小地图（右下角，显示节点分布 + 视口框）
+function renderMinimap() {
+  const mCanvas = document.getElementById('minimap-canvas');
+  const mViewport = document.getElementById('minimap-viewport');
+  const body = document.getElementById('canvas-body');
+  if (!mCanvas || !mViewport || !body) return;
+
+  const MC_W = 140, MC_H = 100;
+  const ctx = mCanvas.getContext('2d');
+  ctx.clearRect(0, 0, MC_W, MC_H);
+
+  const nodesArr = Object.values(cvNodes);
+  if (nodesArr.length === 0) return;
+
+  let minWX = Infinity, minWY = Infinity, maxWX = -Infinity, maxWY = -Infinity;
+  nodesArr.forEach(n => {
+    const meta = CV_TYPE_META[n.type];
+    const totalH = cvNodeTotalH(n, meta);
+    minWX = Math.min(minWX, n.x); minWY = Math.min(minWY, n.y);
+    maxWX = Math.max(maxWX, n.x + meta.w); maxWY = Math.max(maxWY, n.y + totalH);
+  });
+  const worldW = maxWX - minWX + 100, worldH = maxWY - minWY + 100;
+  const mScale = Math.min(MC_W / worldW, MC_H / worldH) * 0.85;
+  const mOX = (MC_W - worldW * mScale) / 2 - minWX * mScale;
+  const mOY = (MC_H - worldH * mScale) / 2 - minWY * mScale;
+
+  const typeColor = { ref: 'rgba(56,189,248,.6)', image: 'rgba(250,204,21,.6)', video: 'rgba(129,140,248,.7)' };
+  nodesArr.forEach(n => {
+    const meta = CV_TYPE_META[n.type];
+    ctx.fillStyle = typeColor[n.type] || 'rgba(129,140,248,.5)';
+    ctx.fillRect(mOX + n.x * mScale, mOY + n.y * mScale, meta.w * mScale, meta.h * mScale);
+  });
+
+  const vw = body.clientWidth, vh = body.clientHeight;
+  const vpx = mOX + (-cvPan.x / cvZoom) * mScale;
+  const vpy = mOY + (-cvPan.y / cvZoom) * mScale;
+  const vpw = (vw / cvZoom) * mScale;
+  const vph = (vh / cvZoom) * mScale;
+  mViewport.style.left = vpx + 'px';
+  mViewport.style.top  = vpy + 'px';
+  mViewport.style.width = vpw + 'px';
+  mViewport.style.height = vph + 'px';
+}
+
+function syncCanvasParams() {
+  const aspect = document.getElementById('video-aspect');
+  const dur    = document.getElementById('video-duration');
+  const mode   = document.getElementById('video-mode');
+  const chipA  = document.getElementById('canvas-chip-aspect');
+  const chipD  = document.getElementById('canvas-chip-duration');
+  const chipM  = document.getElementById('canvas-chip-mode');
+
+  if (chipA && aspect) chipA.textContent = aspect.value;
+  if (chipD && dur)    chipD.textContent = dur.value + ' 秒';
+  if (chipM && mode) {
+    const labels = { auto: '自动', text: '文生视频', keyframe: '首尾帧', reference: '多参考图' };
+    chipM.textContent = labels[mode.value] || mode.value;
+  }
+}
+
+// ---- 缩放控制 ----
+
+function canvasZoomTo(newZoom, cx, cy) {
+  const body = document.getElementById('canvas-body');
+  if (!body) return;
+  newZoom = Math.max(CV_ZOOM_MIN, Math.min(CV_ZOOM_MAX, newZoom));
+  const rect = body.getBoundingClientRect();
+  const localX = cx - rect.left;
+  const localY = cy - rect.top;
+  const wx = (localX - cvPan.x) / cvZoom;
+  const wy = (localY - cvPan.y) / cvZoom;
+  cvZoom = newZoom;
+  cvPan.x = localX - wx * cvZoom;
+  cvPan.y = localY - wy * cvZoom;
+  applyCanvasViewport();
+}
+
+function canvasZoomIn()  {
+  const body = document.getElementById('canvas-body');
+  const rect = body?.getBoundingClientRect();
+  canvasZoomTo(cvZoom * 1.25, rect ? rect.left + rect.width/2 : 0, rect ? rect.top + rect.height/2 : 0);
+}
+function canvasZoomOut() {
+  const body = document.getElementById('canvas-body');
+  const rect = body?.getBoundingClientRect();
+  canvasZoomTo(cvZoom * 0.8, rect ? rect.left + rect.width/2 : 0, rect ? rect.top + rect.height/2 : 0);
+}
+
+// 适应画布：让所有节点居中显示
+function canvasFitView() {
+  const body = document.getElementById('canvas-body');
+  const nodesArr = Object.values(cvNodes);
+  if (!body || nodesArr.length === 0) {
+    cvPan = { x: 0, y: 0 }; cvZoom = 1;
+    applyCanvasViewport();
+    return;
+  }
+  let minWX = Infinity, minWY = Infinity, maxWX = -Infinity, maxWY = -Infinity;
+  nodesArr.forEach(n => {
+    const meta = CV_TYPE_META[n.type];
+    const totalH = cvNodeTotalH(n, meta);
+    minWX = Math.min(minWX, n.x); minWY = Math.min(minWY, n.y);
+    maxWX = Math.max(maxWX, n.x + meta.w); maxWY = Math.max(maxWY, n.y + totalH);
+  });
+  const nodeW = maxWX - minWX + 80, nodeH = maxWY - minWY + 80;
+  const vw = body.clientWidth, vh = body.clientHeight - 120;
+  cvZoom = Math.min(1.5, Math.max(0.3, Math.min(vw / nodeW, vh / nodeH)));
+  cvPan.x = (vw - nodeW * cvZoom) / 2 - minWX * cvZoom + 40 * cvZoom;
+  cvPan.y = (vh - nodeH * cvZoom) / 2 - minWY * cvZoom + 40 * cvZoom;
+  applyCanvasViewport();
+}
+
+// ---- 添加参考图（工具栏 / 拖拽） ----
+
+function addCanvasImage() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const body = document.getElementById('canvas-body');
+    const vw = body?.clientWidth || 800, vh = body?.clientHeight || 600;
+    const center = screenToWorld(vw / 2, vh / 2 - 100);
+    const id = cvNewNode('ref', center.x, center.y);
+    cvNodes[id].data.label = file.name.replace(/\.[^.]+$/, '').slice(0, 20) || '参考图';
+    resizeAndEncode(file, 1024, 1024, 0.85).then(uri => {
+      cvNodes[id].data.image = uri;
+      cvImgRatio(uri).then(r => { cvNodes[id].data.imgRatio = r; });
+      renderAllNodes();
+    });
+  };
+  input.click();
+}
+
+function handleCanvasFileDrop(file, worldX, worldY) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const id = cvNewNode('ref', worldX, worldY);
+  cvNodes[id].data.label = file.name.replace(/\.[^.]+$/, '').slice(0, 20) || '参考图';
+  resizeAndEncode(file, 1024, 1024, 0.85).then(uri => {
+    cvNodes[id].data.image = uri;
+    cvImgRatio(uri).then(r => { cvNodes[id].data.imgRatio = r; renderAllNodes(); });
+    renderAllNodes();
+  });
+}
+
+// 工具栏 / 右键菜单：按类型新建节点（可指定世界坐标, 否则视口中央）
+function cvCtxAddNode(type, wx, wy) {
+  const body = document.getElementById('canvas-body');
+  const vw = body?.clientWidth || 800, vh = body?.clientHeight || 600;
+  if (wx === undefined || wy === undefined) {
+    const c = screenToWorld(vw / 2, vh / 2 - 100);
+    wx = c.x; wy = c.y;
+  }
+  if (type === 'ref') {
+    // 先建一个空参考图节点留在画布上, 再弹文件框选图。
+    // 取消选择时保留空节点（可在节点右键里"重新选图"），避免"点了却啥也没出现"。
+    const id = cvNewNode('ref', wx, wy);
+    renderAllNodes();
+    const node = cvNodes[id];
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = ev => {
+      const file = ev.target.files[0];
+      if (!file) { showToast('未选择图片 · 该参考图节点已保留, 可在其右键里重新选图'); return; }
+      node.data.label = file.name.replace(/\.[^.]+$/, '').slice(0, 20) || '参考图';
+      resizeAndEncode(file, 1024, 1024, 0.85).then(uri => {
+        node.data.image = uri;
+        cvImgRatio(uri).then(r => { node.data.imgRatio = r; });
+        renderAllNodes();
+      });
+    };
+    input.click();
+  } else {
+    const id = cvNewNode(type, wx, wy);
+    renderAllNodes();
+    openNodePanel(id);
+  }
+}
+
+function initCanvasFromRefs() {
+  videoRefImages.forEach((uri, i) => {
+    const x = 60 + (i % 3) * 240, y = 60 + Math.floor(i / 3) * 200;
+    const id = cvNewNode('ref', x, y);
+    cvNodes[id].data.image = uri;
+    cvNodes[id].data.label = '素材' + (i + 1);
+    cvImgRatio(uri).then(r => { cvNodes[id].data.imgRatio = r; });
+  });
+  applyCanvasViewport();
+  renderAllNodes();
+  requestAnimationFrame(canvasFitView);
+}
+
+function clearCanvas() {
+  Object.values(cvNodes).forEach(n => { if (n._pollTimer) clearInterval(n._pollTimer); });
+  Object.keys(cvNodes).forEach(id => delete cvNodes[id]);
+  cvEdges.length = 0;
+  cvSelectedId = null;
+  closeNodePanel();
+  applyCanvasViewport();
+  renderAllNodes();
+}
+
+// ---- 侧滑参数面板（展开窗口） ----
+
+function openNodePanel(id) {
+  const node = cvNodes[id];
+  if (!node) return;
+  cvSelectedId = id;
+  renderAllNodes();
+  const panel = document.getElementById('cv-panel');
+  const title = document.getElementById('cv-panel-title');
+  const body  = document.getElementById('cv-panel-body');
+  if (!panel || !body) return;
+  title.textContent = CV_TYPE_META[node.type].title + ' · ' + (node.data.label || id);
+  body.innerHTML = cvPanelHtml(node);
+  cvBindPanel(node);
+  panel.classList.add('show');
+}
+
+function closeNodePanel() {
+  const panel = document.getElementById('cv-panel');
+  if (panel) panel.classList.remove('show');
+}
+
+function cvPanelHtml(node) {
+  const refs = cvGatherRefs(node);
+  const refList = refs.length
+    ? refs.map((u, i) => `<img class="cv-link-thumb" src="${u}" title="参考图 ${i + 1}">`).join('')
+    : `<span class="cv-link-empty">未连接参考图 · 从输入口拖线</span>`;
+
+  if (node.type === 'ref') {
+    return `
+      <div class="cv-panel-field">
+        <label>图片</label>
+        ${node.data.image
+          ? `<img src="${node.data.image}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`
+          : `<div style="padding:14px;background:var(--frame);border-radius:8px;color:var(--text3);text-align:center">尚未选择图片</div>`}
+      </div>
+      <div class="cv-panel-field">
+        <label>标签</label>
+        <input type="text" data-k="label" value="${escapeHtml(node.data.label || '')}">
+      </div>
+      ${!node.data.image ? `<button class="cv-panel-run" data-act="pick">📷 选择图片</button>` : ''}
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+        <button class="cv-panel-run" style="background:var(--surface3);color:var(--text2)" data-act="dup">⧉ 复制节点</button>
+        <button class="cv-panel-run" style="background:#7f1d1d;color:#fecaca" data-act="del">🗑 删除节点</button>
+      </div>`;
+  }
+
+  if (node.type === 'image') {
+    const d = node.data;
+    return `
+      <div class="cv-panel-field">
+        <label>提示词</label>
+        <textarea data-k="prompt" placeholder="描述要生成的图片...">${escapeHtml(d.prompt || '')}</textarea>
+      </div>
+      <div class="cv-panel-row">
+        <div class="cv-panel-field">
+          <label>清晰度</label>
+          <select data-k="size">${['1K','2K','3K','4K'].map(s => `<option ${d.size===s?'selected':''}>${s}</option>`).join('')}</select>
+        </div>
+        <div class="cv-panel-field">
+          <label>比例</label>
+          <select data-k="ratio">${['1:1','16:9','9:16','4:3','3:4','3:2','2:3','21:9'].map(s => `<option ${d.ratio===s?'selected':''}>${s}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="cv-panel-field">
+        <label>数量</label>
+        <select data-k="n"><option ${d.n===1?'selected':''}>1</option><option ${d.n===2?'selected':''}>2</option></select>
+      </div>
+      <div class="cv-panel-field">
+        <label>反向提示词 <span class="cv-flabel-hint">可选</span></label>
+        <input type="text" data-k="negative" placeholder="不想要的内容" value="${escapeHtml(d.negative || '')}">
+      </div>
+      <div class="cv-panel-field">
+        <label>已连接参考图 <span class="cv-flabel-hint">从输入口拖线</span></label>
+        <div class="cv-panel-linklist">${refList}</div>
+      </div>
+      ${d.result ? `<div class="cv-panel-result show"><img src="${d.result}"></div>` : ''}
+      ${d.result ? `<button class="cv-panel-run" style="background:var(--surface3);color:var(--text2)" data-act="save">💾 保存图片</button>` : ''}
+      <button class="cv-panel-run" data-act="run" ${node.status==='running'?'disabled':''}>${node.status==='running'?'⏳ 生成中...':'▶ 生成图片'}</button>`;
+  }
+
+  const d = node.data;
+  return `
+    <div class="cv-panel-field">
+      <label>提示词</label>
+      <textarea data-k="prompt" placeholder="描述要生成的视频...">${escapeHtml(d.prompt || '')}</textarea>
+    </div>
+    <div class="cv-panel-row">
+      <div class="cv-panel-field">
+        <label>画幅</label>
+        <select data-k="aspect">${['16:9','9:16','1:1','4:3','3:4','21:9'].map(s => `<option ${d.aspect===s?'selected':''}>${s}</option>`).join('')}</select>
+      </div>
+      <div class="cv-panel-field">
+        <label>时长</label>
+        <select data-k="seconds">${['4','5','8','12'].map(s => `<option ${String(d.seconds)===s?'selected':''}>${s} 秒</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="cv-panel-field">
+      <label>模式</label>
+      <select data-k="mode">
+        <option value="auto">自动（按参考图数）</option>
+        <option value="text" ${d.mode==='text'?'selected':''}>文生视频</option>
+        <option value="keyframe" ${d.mode==='keyframe'?'selected':''}>首尾帧</option>
+        <option value="reference" ${d.mode==='reference'?'selected':''}>多参考图</option>
+      </select>
+    </div>
+    <div class="cv-panel-field">
+      <label>随机种子 <span class="cv-flabel-hint">留空=随机</span></label>
+      <input type="text" data-k="seed" value="${escapeHtml(d.seed || '')}">
+    </div>
+    <div class="cv-panel-field">
+      <label>反向提示词 <span class="cv-flabel-hint">可选</span></label>
+      <input type="text" data-k="negative" placeholder="不想要的内容" value="${escapeHtml(d.negative || '')}">
+    </div>
+    <div class="cv-panel-field">
+      <label>已连接参考图 <span class="cv-flabel-hint">video 前两根=首/尾帧</span></label>
+      <div class="cv-panel-linklist">${refList}</div>
+    </div>
+    ${d.result ? `<div class="cv-panel-result show"><video controls loop src="${d.result}"></video></div>` : ''}
+    ${d.result ? `<button class="cv-panel-run" style="background:var(--surface3);color:var(--text2)" data-act="save">💾 保存视频</button>` : ''}
+    <button class="cv-panel-run" data-act="run" ${node.status==='running'?'disabled':''}>${node.status==='running'?'⏳ 渲染中...':'▶ 生成视频'}</button>`;
+}
+
+function cvBindPanel(node) {
+  const body = document.getElementById('cv-panel-body');
+  body.querySelectorAll('[data-k]').forEach(el => {
+    const k = el.dataset.k;
+    el.addEventListener('change', () => {
+      if (k === 'n' || k === 'seconds') node.data[k] = parseInt(el.value);
+      else node.data[k] = el.value;
+      if (k === 'label') {
+        node.data.label = el.value;
+        document.getElementById('cv-panel-title').textContent = CV_TYPE_META[node.type].title + ' · ' + (el.value || node.id);
+      }
+      if (k === 'size' || k === 'ratio' || k === 'aspect' || k === 'mode') {
+        // 重新渲染面板里的结果区（不变）, 仅更新节点
+        renderAllNodes();
+      }
+    });
+  });
+  body.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const act = btn.dataset.act;
+      if (act === 'del') { closeNodePanel(); cvRemoveNode(node.id); }
+      else if (act === 'dup') {
+        const copyId = cvNewNode(node.type, node.x + 40, node.y + 40);
+        Object.assign(cvNodes[copyId].data, JSON.parse(JSON.stringify(node.data)));
+        cvNodes[copyId].data.result = null;
+        renderAllNodes();
+      }
+      else if (act === 'pick') {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = ev => {
+          const file = ev.target.files[0];
+          if (!file) return;
+          resizeAndEncode(file, 1024, 1024, 0.85).then(uri => {
+            node.data.image = uri;
+            cvImgRatio(uri).then(r => { node.data.imgRatio = r; renderAllNodes(); openNodePanel(node.id); });
+            renderAllNodes();
+          });
+        };
+        input.click();
+      }
+      else if (act === 'run') {
+        if (node.type === 'image') runImageNode(node.id);
+        else if (node.type === 'video') runVideoNode(node.id);
+      }
+      else if (act === 'save') {
+        saveNodeResult(node, btn);
+      }
+    });
+  });
+}
+
+// 保存画布节点生成结果到 output 目录（图片/视频各自走对应后端保存端点）
+async function saveNodeResult(node, btn) {
+  const url = node.data.result;
+  if (!url) { showToast('⚠️ 没有可保存的结果'); return; }
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ 保存中...';
+  try {
+    const resp = await fetch(API + (node.type === 'video' ? '/v1/video/save' : '/v1/images/save'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('✅ 已保存到: ' + data.path);
+      btn.textContent = '💾 已保存';
+    } else {
+      showToast('❌ 保存失败: ' + (data.error?.message || ''));
+      btn.textContent = origText;
+    }
+  } catch (e) {
+    showToast('❌ 保存失败: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+// ---- 画布内生成：图片节点 ----
+
+async function runImageNode(id) {
+  const node = cvNodes[id];
+  if (!node || node.status === 'running') return;
+  const d = node.data;
+  const prompt = (d.prompt || '').trim() || (document.getElementById('video-prompt')?.value.trim());
+  if (!prompt) { showToast('⚠️ 提示词为空'); return; }
+
+  const refs = cvGatherRefs(node);
+  const reqBody = { prompt, size: d.size || '1K', ratio: d.ratio || '1:1', n: parseInt(d.n || 1), model: currentImageModel };
+  if (d.negative) reqBody.negative_prompt = d.negative;
+  if (refs.length > 0) reqBody.reference_images = refs.slice(0, 4);
+
+  node.status = 'running';
+  renderAllNodes();
+  const panel = document.getElementById('cv-panel');
+  if (panel.classList.contains('show')) {
+    const runBtn = panel.querySelector('[data-act="run"]');
+    if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ 生成中...'; }
+  }
+
+  try {
+    const resp = await fetch(API + '/v1/images/generations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) {
+      node.status = 'error';
+      showToast('❌ ' + (data.error?.message || `HTTP ${resp.status}`));
+      renderAllNodes();
+      refreshPanelRun(id);
+      return;
+    }
+    const urls = (data.data || []).map(x => x.url).filter(Boolean);
+    if (urls.length === 0) {
+      node.status = 'error';
+      showToast('❌ 生成失败：无返回图片');
+      renderAllNodes();
+      refreshPanelRun(id);
+      return;
+    }
+    node.data.result = urls[0];
+    node.status = 'done';
+    showToast('✅ 图片已生成');
+    renderAllNodes();
+    openNodePanel(id);
+  } catch (e) {
+    node.status = 'error';
+    showToast('❌ 请求失败: ' + e.message);
+    renderAllNodes();
+    refreshPanelRun(id);
+  }
+}
+
+function refreshPanelRun(id) {
+  const node = cvNodes[id];
+  const panel = document.getElementById('cv-panel');
+  const runBtn = panel?.querySelector('[data-act="run"]');
+  if (runBtn && node) { runBtn.disabled = false; runBtn.textContent = node.type === 'video' ? '▶ 生成视频' : '▶ 生成图片'; }
+}
+
+// ---- 画布内生成：视频节点 ----
+
+async function runVideoNode(id) {
+  const node = cvNodes[id];
+  if (!node || node.status === 'running') return;
+  const d = node.data;
+  const prompt = (d.prompt || '').trim() || (document.getElementById('video-prompt')?.value.trim());
+  if (!prompt) { showToast('⚠️ 提示词为空'); return; }
+
+  const refs = cvGatherRefs(node);
+  const reqBody = { prompt, model: currentVideoModel, seconds: String(d.seconds || 5), aspect_ratio: d.aspect || '16:9' };
+  if (d.mode && d.mode !== 'auto') reqBody.mode = d.mode;
+  if (d.seed && String(d.seed).trim() !== '') reqBody.seed = parseInt(d.seed);
+  if (d.negative) reqBody.negative_prompt = d.negative;
+  if (refs.length > 0) reqBody.reference_images = refs.slice(0, 5);
+
+  node.status = 'running';
+  renderAllNodes();
+  const panel = document.getElementById('cv-panel');
+  if (panel.classList.contains('show')) {
+    const runBtn = panel.querySelector('[data-act="run"]');
+    if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ 生成中...'; }
+  }
+
+  try {
+    const resp = await fetch(API + '/v1/video/generations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) {
+      node.status = 'error';
+      showToast('❌ ' + (data.error?.message || `HTTP ${resp.status}`));
+      renderAllNodes();
+      refreshPanelRun(id);
+      return;
+    }
+    const taskId = data.task_id;
+    const raw0 = data.raw || data;
+    const directUrl = extractVideoUrl(raw0);
+    if (!taskId && directUrl) {
+      node.data.result = directUrl;
+      node.status = 'done';
+      showToast('✅ 视频已生成');
+      renderAllNodes();
+      openNodePanel(id);
+      return;
+    }
+    if (!taskId) {
+      node.status = 'error';
+      showToast('❌ 无法获取视频任务 ID');
+      renderAllNodes();
+      refreshPanelRun(id);
+      return;
+    }
+
+    const POLL = 6000, MAXP = 300;
+    let count = 0;
+    node._pollTimer = setInterval(async () => {
+      count++;
+      try {
+        const sResp = await fetch(API + '/v1/video/status/' + taskId);
+        const sData = await sResp.json();
+        if (!sResp.ok || sData.error) {
+          if (sResp.status === 429) return;
+          clearInterval(node._pollTimer);
+          node.status = 'error';
+          showToast('❌ 查询视频状态失败: ' + (sData.error?.message || ''));
+          renderAllNodes();
+          refreshPanelRun(id);
+          return;
+        }
+        const raw = sData.raw || sData;
+        const status = extractVideoStatus(raw);
+        if (status === 'completed' || status === 'done' || status === 'ready' || status === 'succeeded') {
+          clearInterval(node._pollTimer);
+          const url = extractVideoUrl(raw);
+          if (url) { node.data.result = url; node.status = 'done'; showToast('✅ 视频已生成'); }
+          else { node.status = 'error'; showToast('⚠️ 完成但未找到视频链接'); }
+          renderAllNodes();
+          openNodePanel(id);
+        } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+          clearInterval(node._pollTimer);
+          node.status = 'error';
+          showToast('❌ 视频生成失败: ' + (raw.error || raw.message || status));
+          renderAllNodes();
+          refreshPanelRun(id);
+        } else if (count >= MAXP) {
+          clearInterval(node._pollTimer);
+          node.status = 'error';
+          showToast('❌ 视频生成超时');
+          renderAllNodes();
+          refreshPanelRun(id);
+        }
+      } catch (e) { /* 网络错误, 继续轮询 */ }
+    }, POLL);
+  } catch (e) {
+    node.status = 'error';
+    showToast('❌ 请求失败: ' + e.message);
+    renderAllNodes();
+    refreshPanelRun(id);
+  }
+}
+
+// 画布级"重新生成"：对当前选中视频节点运行
+async function generateFromCanvas() {
+  const target = cvNodes[cvSelectedId] || Object.values(cvNodes).find(n => n.type === 'video');
+  if (!target) { showToast('请先创建/选中一个视频节点'); return; }
+  openNodePanel(target.id);
+}
+
+// 刷新现有参考图 strip（与 removeRefImage 内部逻辑相同, 抽成可复用函数）
+function refreshRefThumbs(containerId) {
+  const container = document.getElementById(containerId);
+  const addBtn = container?.querySelector('.ref-add');
+  const arr = containerId === 'video-ref-images' ? videoRefImages : imgRefImages;
+  container.querySelectorAll('.ref-slot').forEach(s => s.remove());
+  arr.forEach((uri, i) => addRefThumb(uri, i, containerId));
+  if (addBtn) addBtn.style.display = arr.length >= (containerId === 'video-ref-images' ? 5 : 4) ? 'none' : '';
+}
+
+// ---- 右键菜单 ----
+
+function showCtxMenu(clientX, clientY, items) {
+  const menu = document.getElementById('cv-ctxmenu');
+  if (!menu) return;
+  menu.innerHTML = items.map(it => {
+    if (it.sep) return `<div class="cv-ctx-sep"></div>`;
+    return `<div class="cv-ctx-item" data-act="${it.act}"><span class="cv-ctx-ico">${it.ico || ''}</span>${it.label}</div>`;
+  }).join('');
+  menu.querySelectorAll('.cv-ctx-item').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      hideCtxMenu();
+      const it = items.find(x => x.act === el.dataset.act);
+      if (it && it.fn) it.fn();
+    });
+  });
+  menu.classList.add('show');
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let x = clientX, y = clientY;
+  if (x + mw > window.innerWidth)  x = window.innerWidth - mw - 8;
+  if (y + mh > window.innerHeight) y = window.innerHeight - mh - 8;
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+}
+function hideCtxMenu() {
+  const menu = document.getElementById('cv-ctxmenu');
+  if (menu) menu.classList.remove('show');
+}
+
+function cvContextOnBody(e, wx, wy) {
+  showCtxMenu(e.clientX, e.clientY, [
+    { ico: '📷', label: '添加参考图', act: 'ref',   fn: () => cvCtxAddNode('ref', wx, wy) },
+    { ico: '🎨', label: '生成图片',   act: 'image', fn: () => cvCtxAddNode('image', wx, wy) },
+    { ico: '🎬', label: '生成视频',   act: 'video', fn: () => cvCtxAddNode('video', wx, wy) },
+    { sep: true },
+    { ico: '⊡', label: '适应画布',   act: 'fit',   fn: () => canvasFitView() },
+    { ico: '🎯', label: '重置视图',   act: 'reset', fn: () => { cvPan = { x: 0, y: 0 }; cvZoom = 1; applyCanvasViewport(); } },
+  ]);
+}
+
+function cvContextOnNode(e, nodeId) {
+  const node = cvNodes[nodeId];
+  if (!node) return;
+  const items = [
+    { ico: '⚙', label: '展开参数', act: 'panel', fn: () => openNodePanel(nodeId) },
+    { ico: '▶', label: '生成' + (node.type === 'video' ? '视频' : '图片'), act: 'run',
+      fn: () => node.type === 'image' ? runImageNode(nodeId) : runVideoNode(nodeId) },
+    { ico: '📷', label: '重新选图', act: 'pick', fn: () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*';
+      input.onchange = ev => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        resizeAndEncode(file, 1024, 1024, 0.85).then(uri => {
+          node.data.image = uri;
+          cvImgRatio(uri).then(r => { node.data.imgRatio = r; renderAllNodes(); });
+        });
+      };
+      input.click();
+    }},
+    { sep: true },
+    { ico: '⧉', label: '复制节点', act: 'dup', fn: () => {
+      const copyId = cvNewNode(node.type, node.x + 40, node.y + 40);
+      Object.assign(cvNodes[copyId].data, JSON.parse(JSON.stringify(node.data)));
+      cvNodes[copyId].data.result = null;
+      renderAllNodes();
+    }},
+    { ico: '🗑', label: '删除节点', act: 'del', fn: () => cvRemoveNode(nodeId) },
+  ];
+  // 非 ref 节点隐藏"重新选图"
+  if (node.type !== 'ref') items.splice(2, 1);
+  showCtxMenu(e.clientX, e.clientY, items);
+}
+
+// ---- 画布事件绑定（DOM 就绪后执行） ----
+document.addEventListener('DOMContentLoaded', () => {
+  const body = document.getElementById('canvas-body');
+
+  // 视频参数变化时同步画布参数 chips
+  ['video-aspect', 'video-duration', 'video-mode'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', syncCanvasParams);
+  });
+
+  // 窗口大小变化时重绘
+  window.addEventListener('resize', () => {
+    if (document.getElementById('page-canvas')?.style.display === 'flex') {
+      renderCanvasEdges();
+      renderMinimap();
+    }
+  });
+
+  if (!body) return;
+
+  const onCanvas = () => document.getElementById('page-canvas').style.display === 'flex';
+
+  // ---- 滚轮缩放（Ctrl + 滚轮）/ 普通滚轮平移 ----
+  body.addEventListener('wheel', e => {
+    if (!onCanvas()) return;
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      canvasZoomTo(cvZoom * (e.deltaY > 0 ? 0.9 : 1.1), e.clientX, e.clientY);
+    } else if (!e.shiftKey) {
+      e.preventDefault();
+      cvPan.x -= e.deltaX;
+      cvPan.y -= e.deltaY;
+      applyCanvasViewport();
+    }
+  }, { passive: false });
+
+  // ---- 键盘：空格平移 / Delete 删节点 / Esc 关菜单和面板 ----
+  let spacePressed = false;
+  document.addEventListener('keydown', e => {
+    if (!onCanvas()) return;
+    if (e.code === 'Space' && !e.repeat) { spacePressed = true; e.preventDefault(); }
+    if (e.code === 'Escape') { hideCtxMenu(); closeNodePanel(); }
+    if ((e.code === 'Delete' || e.code === 'Backspace') && cvSelectedId && cvNodes[cvSelectedId]) {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      e.preventDefault();
+      cvRemoveNode(cvSelectedId);
+    }
+  });
+  document.addEventListener('keyup', e => { if (e.code === 'Space') spacePressed = false; });
+
+  // 空格 + 拖拽平移画布
+  let panning = false, panSX, panSY, panOX, panOY;
+  body.addEventListener('pointerdown', e => {
+    if (!onCanvas()) return;
+    // 右键交给 contextmenu 处理
+    if (e.button === 2) return;
+    // 点击的是右键菜单本身 → 完全放行（菜单项有自己的 click 监听）
+    if (e.target.closest && e.target.closest('#cv-ctxmenu')) return;
+    const isBackground = e.target === body || e.target.id === 'canvas-grid' || e.target.id === 'canvas-world';
+    if (!isBackground && !(spacePressed || e.button === 1)) {
+      hideCtxMenu();
+      return;
+    }
+    if (spacePressed || e.button === 1) {
+      panning = true;
+      panSX = e.clientX; panSY = e.clientY;
+      panOX = cvPan.x; panOY = cvPan.y;
+      body.setPointerCapture(e.pointerId);
+      body.style.cursor = 'grabbing';
+      e.preventDefault();
+      return;
+    }
+    cvSelectedId = null;
+    hideCtxMenu();
+    renderAllNodes();
+  });
+
+  body.addEventListener('pointermove', e => {
+    if (!panning) return;
+    cvPan.x = panOX + (e.clientX - panSX);
+    cvPan.y = panOY + (e.clientY - panSY);
+    applyCanvasViewport();
+  });
+
+  const endPan = () => { if (panning) { panning = false; body.style.cursor = ''; } };
+  body.addEventListener('pointerup', endPan);
+  body.addEventListener('pointercancel', endPan);
+
+  // ---- 右键菜单 ----
+  body.addEventListener('contextmenu', e => {
+    if (!onCanvas()) return;
+    e.preventDefault();
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const nodeEl = hit?.closest?.('.canvas-node');
+    if (nodeEl) {
+      cvContextOnNode(e, nodeEl.dataset.nodeId);
+    } else {
+      const rect = body.getBoundingClientRect();
+      const wx = (e.clientX - rect.left - cvPan.x) / cvZoom;
+      const wy = (e.clientY - rect.top  - cvPan.y) / cvZoom;
+      cvContextOnBody(e, wx, wy);
+    }
+  });
+
+  // 点击空白处关闭右键菜单
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('cv-ctxmenu');
+    if (menu && menu.classList.contains('show') && !menu.contains(e.target)) hideCtxMenu();
+  });
+
+  // ---- 拖拽文件进画布添加参考图 ----
+  const dropHint = document.createElement('div');
+  dropHint.className = 'canvas-drop-hint';
+  dropHint.textContent = '📥 松开以添加参考图';
+  body.appendChild(dropHint);
+
+  body.addEventListener('dragover', e => { if (!onCanvas()) return; e.preventDefault(); body.classList.add('drag-over'); });
+  body.addEventListener('dragleave', () => { body.classList.remove('drag-over'); });
+  body.addEventListener('drop', e => {
+    e.preventDefault();
+    body.classList.remove('drag-over');
+    if (!onCanvas()) return;
+    const rect = body.getBoundingClientRect();
+    const w = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+    Array.from(e.dataTransfer.files).forEach((file, idx) => {
+      handleCanvasFileDrop(file, w.x + idx * 20, w.y + idx * 20);
+    });
+  });
+});
+
 
 initAPI();
 </script>

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# 本地密钥文件（真实 API Key，勿提交）。
+# 新成员请复制 .env.example 为 .env 并填入自己的 key。
+.env
+
+# 运行时生成的用户数据（生成物、本地设置）
+output/
+user-data/
+
+# 虚拟环境（平台相关，下载后用 pip install -r requirements.txt 重建）
+venv/

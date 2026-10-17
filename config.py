@@ -76,8 +76,8 @@ class AppConfig:
         model=os.getenv("AGNES_TEXT_MODEL", "agnes-2.5-flash"),
         image_model=os.getenv("AGNES_IMAGE_MODEL", "agnes-image-2.1-flash"),
         image_models=[m.strip() for m in os.getenv("AGNES_IMAGE_MODELS", "").split(",") if m.strip()] or ["agnes-image-2.1-flash"],
-        video_model=os.getenv("AGNES_VIDEO_MODEL", "agnes-video-v2.0"),
-        video_models=[m.strip() for m in os.getenv("AGNES_VIDEO_MODELS", "").split(",") if m.strip()] or ["agnes-video-v2.0"],
+        video_model=os.getenv("AGNES_VIDEO_MODEL", "agnes-video-2.5-flash"),
+        video_models=[m.strip() for m in os.getenv("AGNES_VIDEO_MODELS", "").split(",") if m.strip()] or ["agnes-video-2.5-flash"],
         proxy=os.getenv("AGNES_PROXY", None),
     ))
     deepseek: BackendConfig = field(default_factory=lambda: BackendConfig(

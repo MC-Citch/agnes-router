@@ -250,14 +250,11 @@ class SmartRouter:
         negative_prompt: str | None = None,
         reference_images: list[str] | None = None,
         mode: str | None = None,
-        width: int | None = None,
-        height: int | None = None,
-        num_frames: int | None = None,
-        frame_rate: int | None = None,
-        num_inference_steps: int | None = None,
+        seconds: str | int | None = None,
+        aspect_ratio: str | None = None,
         seed: int | None = None,
     ) -> dict[str, Any]:
-        """视频生成 —— Agnes 特有。"""
+        """视频生成 —— Agnes 2.5 Flash（免费）。"""
         agnes = self.backends.get("agnes")
         if isinstance(agnes, AgnesAdapter):
             return await agnes.generate_video(
@@ -265,11 +262,8 @@ class SmartRouter:
                 negative_prompt=negative_prompt,
                 reference_images=reference_images,
                 mode=mode,
-                width=width,
-                height=height,
-                num_frames=num_frames,
-                frame_rate=frame_rate,
-                num_inference_steps=num_inference_steps,
+                seconds=seconds,
+                aspect_ratio=aspect_ratio,
                 seed=seed,
             )
         raise AdapterError("视频生成仅 Agnes 支持", backend="agnes", retryable=False)
@@ -561,11 +555,8 @@ def create_app() -> "FastAPI":
         negative_prompt = body.get("negative_prompt", None)
         reference_images = body.get("reference_images", None)
         mode = body.get("mode", None)
-        width = body.get("width", None)
-        height = body.get("height", None)
-        num_frames = body.get("num_frames", None)
-        frame_rate = body.get("frame_rate", None)
-        num_inference_steps = body.get("num_inference_steps", None)
+        seconds = body.get("seconds", None)
+        aspect_ratio = body.get("aspect_ratio", None)
         seed = body.get("seed", None)
 
         try:
@@ -574,11 +565,8 @@ def create_app() -> "FastAPI":
                 negative_prompt=negative_prompt,
                 reference_images=reference_images,
                 mode=mode,
-                width=width,
-                height=height,
-                num_frames=num_frames,
-                frame_rate=frame_rate,
-                num_inference_steps=num_inference_steps,
+                seconds=seconds,
+                aspect_ratio=aspect_ratio,
                 seed=seed,
             )
         except AdapterError as e:
@@ -880,56 +868,20 @@ async def _cmd_video(args: list[str]) -> None:
                         help="参考图路径（可多次指定）")
     parser.add_argument("--negative-prompt", "-np", default=None,
                         help="反向提示词（不想要的内容）")
-    parser.add_argument("--mode", default=None, choices=["ti2vid", "keyframes"],
-                        help="生成模式: ti2vid=图生视频, keyframes=关键帧动画")
-    parser.add_argument("--width", type=int, default=None,
-                        help="视频宽度（如 1152）")
-    parser.add_argument("--height", type=int, default=None,
-                        help="视频高度（如 768）")
-    parser.add_argument("--num-frames", type=int, default=None,
-                        help="视频帧数（须为 8n+1，≤441）")
-    parser.add_argument("--frame-rate", type=int, default=None,
-                        help="视频帧率（1-60，默认 24）")
+    parser.add_argument("--mode", default=None,
+                        choices=["text", "keyframe", "reference"],
+                        help="生成模式: text=文生视频, keyframe=首尾帧, reference=多参考图")
+    parser.add_argument("--seconds", default=None,
+                        help="视频时长（4-12 秒，默认 5）")
+    parser.add_argument("--aspect-ratio", default=None,
+                        help="画面比例（如 16:9 / 9:16 / 1:1 / 4:3 / 3:4 / 21:9）")
     parser.add_argument("--seed", type=int, default=None,
                         help="随机种子（可复现结果）")
-    parser.add_argument("--num-inference-steps", type=int, default=None,
-                        help="推理步数（更多步数=更高质量但更慢）")
-    parser.add_argument("--aspect", default=None,
-                        choices=["16:9", "9:16", "1:1", "4:3", "3:4"],
-                        help="画面比例快捷设置（覆盖 --width/--height）")
-    parser.add_argument("--quality", default=None, choices=["480p", "720p", "1080p"],
-                        help="清晰度快捷设置（覆盖 --width/--height）")
     opts = parser.parse_args(args)
 
     prompt = " ".join(opts.prompt) or input("请输入视频生成提示词: ")
     output_dir = Path(opts.output) if opts.output else Path.cwd() / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    # 快捷预设 → 宽高
-    width = opts.width
-    height = opts.height
-    if opts.aspect and opts.quality:
-        # 预设分辨率表
-        RES_PRESETS = {
-            ("16:9", "480p"):  (854, 480),
-            ("9:16", "480p"):  (480, 854),
-            ("1:1",  "480p"):  (480, 480),
-            ("4:3",  "480p"):  (640, 480),
-            ("3:4",  "480p"):  (480, 640),
-            ("16:9", "720p"):  (1280, 720),
-            ("9:16", "720p"):  (720, 1280),
-            ("1:1",  "720p"):  (720, 720),
-            ("4:3",  "720p"):  (960, 720),
-            ("3:4",  "720p"):  (720, 960),
-            ("16:9", "1080p"): (1920, 1080),
-            ("9:16", "1080p"): (1080, 1920),
-            ("1:1",  "1080p"): (1080, 1080),
-            ("4:3",  "1080p"): (1440, 1080),
-            ("3:4",  "1080p"): (1080, 1440),
-        }
-        w, h = RES_PRESETS[(opts.aspect, opts.quality)]
-        width = width or w
-        height = height or h
 
     # 参考图 → Base64 编码
     reference_images = None
@@ -941,16 +893,12 @@ async def _cmd_video(args: list[str]) -> None:
         print(f"  反向提示词: {opts.negative_prompt}")
     if opts.mode:
         print(f"  模式: {opts.mode}")
-    if width or height:
-        print(f"  分辨率: {width or 'auto'}x{height or 'auto'}")
-    if opts.num_frames:
-        print(f"  帧数: {opts.num_frames}")
-    if opts.frame_rate:
-        print(f"  帧率: {opts.frame_rate} fps")
+    if opts.seconds:
+        print(f"  时长: {opts.seconds} 秒")
+    if opts.aspect_ratio:
+        print(f"  画面比例: {opts.aspect_ratio}")
     if opts.seed is not None:
         print(f"  种子: {opts.seed}")
-    if opts.num_inference_steps:
-        print(f"  推理步数: {opts.num_inference_steps}")
 
     print(f"\n  提交视频生成任务...")
     router = SmartRouter()
@@ -960,11 +908,8 @@ async def _cmd_video(args: list[str]) -> None:
             negative_prompt=opts.negative_prompt,
             reference_images=reference_images,
             mode=opts.mode,
-            width=width,
-            height=height,
-            num_frames=opts.num_frames,
-            frame_rate=opts.frame_rate,
-            num_inference_steps=opts.num_inference_steps,
+            seconds=opts.seconds,
+            aspect_ratio=opts.aspect_ratio,
             seed=opts.seed,
         )
     except AdapterError as e:
